@@ -1,0 +1,152 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+{% block page_title %}{{ page_title }}{% endblock page_title %}
+
+{% block content %}
+<style>
+    input[type="text"] {
+        width: 100%;
+        padding: 12px 20px;
+        margin-bottom: 12px;
+        border: 1px solid #ddd;
+      }
+      
+      th {
+        cursor: pointer;
+      }
+      
+      th:hover {
+        background-color: #f1f1f1;
+      }
+
+      .table-responsive {
+        overflow-x: auto;
+      }
+</style>
+
+>
+<div class="container-fluid mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title">{{ page_title }}</h5>
+        </div>
+        <div class="card-body">
+            <!-- Input tìm kiếm -->
+            <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Tìm kiếm..." class="form-control mb-3">
+            <form method="POST" action="{% url 'complete_teaching_schedule' %}">
+                {% csrf_token %}
+                <div class="table-responsive">
+                    <table id="example2" class="table table-bordered table-hover">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>STT</th>
+                                <th>Giáo viên</th>
+                                <th>Tên trường</th>
+                                <th>Tên lớp</th>
+                                <th>Ngày dạy</th>
+                                <th>Thời gian</th>
+                                <th>Đánh dấu hoàn thành</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for session in sessions %}
+                                {% if session.id not in completed_session_ids %}
+                                    <!-- Kiểm tra nếu ngày dạy nhỏ hơn ngày hiện tại -->
+                                    <tr {% if session.schedule_date < today %} class="bg-warning" {% endif %}>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ session.staff.admin.last_name }} {{ session.staff.admin.first_name }}</td>
+                                        <td>{{ session.school_name }}</td>
+                                        <td>{{ session.class_name }}</td>
+                                        <td>
+                                            {{ session.schedule_date|date:"d/m/Y" }} <!-- Hiển thị ngày nếu chưa hoàn thành -->
+                                        </td>
+                                        <td>{{ session.start_time|date:"g:i A" }}</td>
+                                        <td>
+                                            <input type="checkbox" name="session_id[]" value="{{ session.id }}">
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <button type="submit" class="btn btn-primary">Xác nhận</button>
+                </div>
+                
+            </form>
+        </div>
+    </div>
+</div>
+<script>// Tìm kiếm trong bảng
+    function searchTable() {
+        // Lấy giá trị tìm kiếm từ input
+        var input = document.getElementById("searchInput");
+        var filter = input.value.toLowerCase();
+        var table = document.getElementById("example2");
+        var tr = table.getElementsByTagName("tr");
+    
+        // Duyệt qua tất cả các hàng của bảng
+        for (var i = 1; i < tr.length; i++) {
+            tr[i].style.display = "none";  // Ẩn tất cả các hàng trước
+    
+            // Duyệt qua tất cả các ô trong hàng
+            var td = tr[i].getElementsByTagName("td");
+            for (var j = 0; j < td.length; j++) {
+                if (td[j]) {
+                    if (td[j].innerHTML.toLowerCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";  // Hiển thị hàng nếu tìm thấy từ khóa
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    // Sắp xếp bảng theo cột
+    function sortTable(n) {
+        var table = document.getElementById("example2");
+        var rows = table.rows;
+        var switching = true;
+        var shouldSwitch;
+        var i, x, y;
+        var dir = "asc"; // Hướng sắp xếp ban đầu
+        var switchcount = 0;
+    
+        while (switching) {
+            switching = false;
+            var rowsArray = Array.prototype.slice.call(rows, 1); // Lấy tất cả hàng, trừ hàng tiêu đề
+    
+            for (i = 0; i < (rowsArray.length - 1); i++) {
+                shouldSwitch = false;
+    
+                x = rowsArray[i].getElementsByTagName("TD")[n];
+                y = rowsArray[i + 1].getElementsByTagName("TD")[n];
+    
+                if (dir === "asc") {
+                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else if (dir === "desc") {
+                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+            }
+            if (shouldSwitch) {
+                // Đổi chỗ các hàng
+                rowsArray[i].parentNode.insertBefore(rowsArray[i + 1], rowsArray[i]);
+                switching = true;
+                switchcount++;
+            } else {
+                if (switchcount === 0 && dir === "asc") {
+                    dir = "desc";  // Nếu không có thay đổi nào và hướng là "asc", đổi hướng thành "desc"
+                    switching = true;
+                }
+            }
+        }
+    }
+    
+
+</script>
+{% endblock content %}

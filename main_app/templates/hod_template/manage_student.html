@@ -1,0 +1,255 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+{% block page_title %} 
+  {{ page_title }} 
+{% endblock %} 
+
+{% block content %}
+
+<style>
+  .table-responsive {
+    overflow-x: auto;
+  }
+  
+</style>
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title">{{ page_title }}</h3>
+            <!-- Căn chỉnh nút và ô tìm kiếm về phía bên phải -->
+            <div class="ml-auto d-flex align-items-center" style="flex-wrap: nowrap;">
+              <!-- Nút xuất file Excel bên trái -->
+              <button id="export_button" class="btn btn-success mr-2" style="white-space: nowrap;">
+                <i class="fas fa-file-excel"></i> Xuất dữ liệu ra Excel
+              </button>
+              <!-- Ô tìm kiếm bên phải với kích thước hợp lý -->
+              <input id="searchInput" type="text" class="form-control" placeholder="Tìm kiếm..." style="max-width: 250px;">
+            </div>
+          </div>
+
+          <!-- Bảng dữ liệu -->
+          <div class="card-body">
+            <div class="table-responsive">
+              <table id="example2" class="table table-bordered table-hover">
+                <thead class="thead-dark">
+                  <tr>
+                    <th>#</th>
+                    <th>Tên đầy đủ</th>
+                    <th>Mã học sinh</th>
+                    <th>Giới tính</th>
+                    <th>Tên trường</th>
+                    <th>Lớp</th>
+                    <th>Mã QR</th>
+                    <th>Hành động</th>
+                  </tr>
+                </thead>
+                {% if students %}
+                <tbody id="studentTableBody">
+                  {% for student in students %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ student.admin.last_name }} {{ student.admin.first_name }}</td>
+                    <td>{{ student.admin.student_id }}</td>
+                    <td>{% if student.admin.gender == 'M' %} Nam {% elif student.admin.gender == 'F' %} Nữ {% else %} Không xác định {% endif %}</td>
+                    <td>{{ student.course.name }}</td>
+                    <td>{{ student.session.name }}</td>
+                    <td>
+                      {% if student.admin.qr_code %}
+                      <img class="img img-fluid mb-2" height="56" width="56" src="{{ student.admin.qr_code.url }}" alt="Mã QR"/>
+                      {% else %} Không có mã QR {% endif %}
+                    </td>
+                    <td>
+                      <a href="{% url 'edit_student' student.admin.id %}" class="btn btn-info">Chỉnh sửa</a> -
+                      <a href="{% url 'delete_student' student.admin.id %}" class="btn btn-danger" onclick="return confirm('Bạn có chắc chắn về điều này không?')">Xóa</a>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+                {% else %}
+                <p>Không có sinh viên nào được tìm thấy.</p>
+                {% endif %}
+              </table>
+            
+              <!-- Div chứa các nút phân trang -->
+              <div id="pagination" class="mt-3"></div>
+            </div>
+            
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js" integrity="sha512-UnrKxsCMN9hFk7M56t4I4ckB4N/2HHi0w/7+B/1JsXIX3DmyBcsGpT3/BsuZMZf+6mAr0vP81syWtfynHJ69JA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script> 
+
+<!-- Script xuất file Excel -->
+<script>
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const rowsPerPage = 10; // Số lượng dòng trên mỗi trang
+    const tableBody = document.getElementById('studentTableBody');
+    const rows = tableBody.getElementsByTagName('tr');
+    const pagination = document.getElementById('pagination');
+  
+    const totalPages = Math.ceil(rows.length / rowsPerPage);
+    let currentPage = 1;
+  
+    function displayPage(page) {
+      currentPage = page;
+  
+      // Ẩn tất cả các hàng
+      for (let i = 0; i < rows.length; i++) {
+        rows[i].style.display = 'none';
+      }
+  
+      // Hiển thị các hàng tương ứng với trang hiện tại
+      const start = (page - 1) * rowsPerPage;
+      const end = start + rowsPerPage;
+      for (let i = start; i < end && i < rows.length; i++) {
+        rows[i].style.display = '';
+      }
+  
+      // Cập nhật nút phân trang
+      updatePagination();
+    }
+  
+    function updatePagination() {
+      pagination.innerHTML = '';
+  
+      for (let i = 1; i <= totalPages; i++) {
+        const pageButton = document.createElement('button');
+        pageButton.textContent = i;
+        pageButton.classList.add('btn', 'btn-primary', 'mr-1');
+        if (i === currentPage) {
+          pageButton.classList.add('active');
+        }
+  
+        pageButton.addEventListener('click', function () {
+          displayPage(i);
+        });
+  
+        pagination.appendChild(pageButton);
+      }
+    }
+  
+    // Hiển thị trang đầu tiên khi tải trang
+    displayPage(currentPage);
+  });
+  
+    document.getElementById('export_button').addEventListener('click', async function () {
+      var workbook = new ExcelJS.Workbook();
+      var worksheet = workbook.addWorksheet('Sheet1');
+
+      worksheet.columns = [
+          { header: '#', key: 'index', width: 5 },
+          { header: 'Tên đầy đủ', key: 'full_name', width: 30 },
+          { header: 'Mã học sinh', key: 'student_id', width: 15 },
+          { header: 'Giới tính', key: 'gender', width: 10 },
+          { header: 'Trường', key: 'course', width: 20 },
+          { header: 'Lớp', key: 'class_room', width: 20 },
+          { header: 'Mã QR', key: 'qr_code', width: 16 }
+      ];
+
+      // Style the header row: bold and centered
+      worksheet.getRow(1).font = { bold: true };
+      worksheet.getRow(1).alignment = { horizontal: 'center', vertical: 'middle' };
+
+      var rows = document.querySelectorAll('#example2 tbody tr');
+
+      let rowImages = [];
+
+      // Chỉ thêm các hàng hiển thị vào file Excel
+      for (let row of rows) {
+          if (row.style.display !== 'none') {  // Chỉ xử lý các hàng đang hiển thị
+              var cells = row.querySelectorAll('td');
+              var rowData = {
+                  index: cells[0].innerText,
+                  full_name: cells[1].innerText,
+                  student_id: cells[2].innerText,
+                  gender: cells[3].innerText,
+                  course: cells[4].innerText,
+                  class_room: cells[5].innerText
+              };
+
+              worksheet.addRow(rowData);
+
+              // Center align each cell in the current row
+              worksheet.lastRow.eachCell((cell) => {
+                  cell.alignment = { horizontal: 'center', vertical: 'middle' };
+              });
+
+              // Lưu hình ảnh để xử lý sau
+              if (cells[6].querySelector('img')) {
+                  rowImages.push({ src: cells[6].querySelector('img').src, row: worksheet.lastRow.number, col: 7 });
+              }
+          }
+      }
+
+      // Tải và thêm ảnh vào Excel
+      let imagePromises = rowImages.map((image) => fetch(image.src).then((response) => response.arrayBuffer()));
+      let imageBuffers = await Promise.all(imagePromises);
+
+      rowImages.forEach((image, index) => {
+          const imageId = workbook.addImage({
+              buffer: imageBuffers[index],
+              extension: 'png'
+          });
+
+          worksheet.addImage(imageId, {
+              tl: { col: image.col - 1, row: image.row - 1 },
+              ext: { width: 100, height: 100 }
+          });
+
+          worksheet.getRow(image.row).height = 85;
+          worksheet.getCell(image.row, image.col).alignment = { horizontal: 'center', vertical: 'middle' };
+      });
+
+      // Write workbook to buffer and save as file
+      workbook.xlsx.writeBuffer().then(function (buffer) {
+          saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'danh sách học sinh.xlsx');
+      });
+  });
+</script>
+
+<!-- Script lọc bảng -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById('searchInput');
+    const tableBody = document.getElementById('studentTableBody');
+
+    // Function to filter table rows
+    function filterTable() {
+      const filterValue = searchInput.value.toLowerCase();
+      const rows = tableBody.querySelectorAll('tr');
+
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        let matchFound = false;
+
+        // Duyệt qua tất cả các ô (td) trong hàng
+        for (let i = 0; i < cells.length; i++) {
+          const cellValue = cells[i].textContent.toLowerCase();
+          if (cellValue.includes(filterValue)) {
+            matchFound = true;
+            break;
+          }
+        }
+
+        // Hiển thị hàng nếu tìm thấy từ khóa, ngược lại ẩn đi
+        row.style.display = matchFound ? '' : 'none';
+      });
+    }
+
+    // Add event listener for search input
+    searchInput.addEventListener('input', filterTable);
+  });
+</script>
+
+{% endblock %}

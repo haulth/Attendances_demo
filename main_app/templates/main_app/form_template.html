@@ -1,0 +1,71 @@
+<form role="form" method="POST" enctype="multipart/form-data">
+  {% csrf_token %}
+  <div class="card-body">
+
+    {% for field in form %}
+      <div class="form-group field-group">
+        {{ field.errors }}
+
+        {% if field.label == 'Staff' %}
+          <label for="{{ field.id_for_label }}">Chọn giáo viên</label>
+        {% elif field.label == 'School name' %}
+          <label for="{{ field.id_for_label }}">Thêm tên trường</label>
+        {% elif field.label == 'Class name' %}
+          <label for="{{ field.id_for_label }}">Lớp</label>
+        {% elif field.label == 'Schedule date' %}
+          <label for="{{ field.id_for_label }}">Ngày</label>
+        {% elif field.label == 'Start time' %}
+          <label for="{{ field.id_for_label }}">Thời gian bắt đầu</label>
+        {% elif field.label == 'End time' %}
+          <label for="{{ field.id_for_label }}">Thời gian kết thúc</label>
+        {% elif field.label == 'Name' %}
+          <label for="{{ field.id_for_label }}">Tên</label>
+        {% elif field.label == 'Course' %}
+          <label for="{{ field.id_for_label }}">Chọn trưòng</label>
+        {% elif field.label == 'Feedback' %}
+          <label for="{{ field.id_for_label }}">Phản hồi</label>
+        {% elif field.label == 'Date' %}
+          <label for="{{ field.id_for_label }}">Chọn ngày</label>
+        {% elif field.label == 'Message' %}
+          <label for="{{ field.id_for_label }}">Lý do nghỉ phép</label>
+        {% elif field.label == 'Subject' %}
+          <label for="{{ field.id_for_label }}">Môn học</label>
+        {% elif field.label == 'Student' %}
+          <label for="{{ field.id_for_label }}">Học sinh</label>
+        {% else %}
+          {{ field.label_tag }}
+        {% endif %}
+        
+        {{ field }}
+      </div>
+    {% endfor %}
+  </div>
+  <!-- /.card-body -->
+
+  <div class="card-footer">
+    <button type="submit" class="btn btn-success btn-block">
+      {{ button_text|default:"Xác nhận" }}
+    </button>
+  </div>
+
+</form>
+<script>
+// Tìm kiếm các trường trong form
+function searchFields() {
+    // Lấy giá trị từ input tìm kiếm
+    var input = document.getElementById("searchInput");
+    var filter = input.value.toLowerCase();
+    var fields = document.getElementsByClassName("field-group");
+
+    // Lặp qua tất cả các trường và ẩn những trường không khớp với từ tìm kiếm
+    for (var i = 0; i < fields.length; i++) {
+        var label = fields[i].getElementsByTagName("label")[0];
+        var fieldContent = label ? label.textContent || label.innerText : "";
+        if (fieldContent.toLowerCase().indexOf(filter) > -1) {
+            fields[i].style.display = "";  // Hiển thị trường nếu có từ khóa khớp
+        } else {
+            fields[i].style.display = "none";  // Ẩn trường nếu không khớp
+        }
+    }
+}
+</script>

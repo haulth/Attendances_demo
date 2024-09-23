@@ -1,0 +1,49 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+
+# Django stuff:
+*.log
+*.pot
+*.pyc
+*.pyo
+*.db
+
+# Ignore environment files and settings
+.env
+*.env
+
+# Ignore macOS system files
+.DS_Store
+
+# Ignore virtual environments
+venv/
+ENV/
+env/
+venv.bak/
+
+# Ignore node_modules for JS projects
+node_modules/
+
+# Ignore coverage files for tests
+.coverage
+coverage/
+
+# Ignore compiled code
+*.class
+*.o
+*.out
+*.exe
+
+# Ignore IDE/project files
+.vscode/
+.idea/
+
+# Ignore backups and generated files
+*.bak
+*.swp
+*.tmp
+
+
+

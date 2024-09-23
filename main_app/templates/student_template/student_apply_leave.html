@@ -1,0 +1,56 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+{% block page_title %}
+  {{ page_title }}
+{% endblock %}
+
+{% block content %}
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-12">
+          <!-- general form elements -->
+          <div class="card card-dark">
+            <div class="card-header">
+              <h3 class="card-title">{{ page_title }}</h3>
+            </div>
+
+            {% include 'main_app/form_template.html' with messages=messages form=form button_text='Nộp đơn xin nghỉ phép' %}
+          </div>
+          <!-- /.card -->
+          <div class="card card-dark">
+            <div class="card-header">
+              <h3 class="card-title">Lịch sử nghỉ phép</h3>
+            </div>
+            <div class="table">
+              <table class="table table-bordered">
+                <tr>
+                  <th>ID</th>
+                  <th>Ngày</th>
+                  <th>Tin nhắn</th>
+                  <th>Trạng thái</th>
+                </tr>
+                {% for leave in leave_history %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ leave.date }}</td>
+                    <td>{{ leave.message }}</td>
+                    <td>
+                      {% if leave.status == 0 %}
+                        <span class="badge badge-warning">Chưa giải quyết</span>
+                      {% elif leave.status == 1 %}
+                        <span class="badge badge-success">Đã chấp nhận</span>
+                      {% else %}
+                        <span class="badge badge-danger">Từ chối</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}

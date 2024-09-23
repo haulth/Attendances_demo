@@ -1,0 +1,92 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+{% block page_title %}{{page_title}}{% endblock page_title %}
+
+{% block content %}
+<style>
+    .table-responsive {
+      overflow-x: auto;
+    }
+    
+  </style>
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3 class="card-title">{{page_title}}</h3>
+                        <!-- Trường tìm kiếm -->
+                        <div class="ml-auto">
+                            <input type="text" id="searchInput" onkeyup="searchTable()" class="form-control" placeholder="Tìm kiếm...">
+                        </div>
+                    </div>
+                    <!-- /.card-header -->
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="example2" class="table table-bordered table-hover ">
+                                <thead class="thead-dark">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Giáo viên</th>
+                                        <th>Tên trường</th>
+                                        <th>Tên lớp</th>
+                                        <th>Ngày dạy</th>
+                                        <th>Thời gian</th>
+                                        <th>Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for session in sessions %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ session.staff }}</td>
+                                        <td>{{ session.school_name }}</td>
+                                        <td>{{ session.class_name }}</td>
+                                        <td>{{ session.schedule_date|date:"d/m/Y" }}</td>
+                                        <td>{{ session.start_time|date:"g:i A" }}</td>
+                                        <td>
+                                            <a href="{% url 'edit_session' session.id %}" class="btn btn-info">Chỉnh sửa</a> - 
+                                            <a href="{% url 'delete_session' session.id %}" onclick="return confirm('Bạn có chắc chắn muốn xóa cái này không ?')" class="btn btn-danger">Xóa</a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    // Tìm kiếm trong bảng
+    function searchTable() {
+        // Lấy giá trị tìm kiếm từ ô input
+        var input = document.getElementById("searchInput");
+        var filter = input.value.toLowerCase();
+        var table = document.getElementById("example2");
+        var tr = table.getElementsByTagName("tr");
+
+        // Lặp qua tất cả các hàng, trừ hàng tiêu đề
+        for (var i = 1; i < tr.length; i++) {
+            tr[i].style.display = "none"; // Mặc định ẩn hàng
+            var tds = tr[i].getElementsByTagName("td");
+            
+            // Lặp qua các ô (td) trong hàng để tìm từ khóa
+            for (var j = 0; j < tds.length; j++) {
+                if (tds[j]) {
+                    if (tds[j].innerHTML.toLowerCase().indexOf(filter) > -1) {
+                        tr[i].style.display = ""; // Hiển thị hàng nếu tìm thấy từ khóa
+                        break; // Ngừng kiểm tra các ô khác trong hàng
+                    }
+                }
+            }
+        }
+    }
+</script>
+
+{% endblock content %}

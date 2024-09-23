@@ -1,0 +1,83 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+{% block page_title %}{{page_title}}{% endblock page_title %}
+
+{% block content %}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3 class="card-title">{{page_title}}</h3>
+                        <!-- Trường tìm kiếm -->
+                        <div class="ml-auto">
+                            <input type="text" id="searchInput" class="form-control" placeholder="Tìm kiếm...">
+                        </div>
+                    </div>
+                    <!-- /.card-header -->
+                    <div class="card-body">
+                        <table id="example2" class="table table-bordered table-hover">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Tên trường</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="courseTableBody">
+                                {% for course in courses %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{course.name}}</td>
+                                    <td>
+                                        <a href="{% url 'edit_course' course.id %}" class="btn btn-info">Chỉnh sửa</a> -
+                                        <a href="{% url 'delete_course' course.id %}" onclick="return confirm('Bạn có chắc chắn muốn xóa khóa học này ?')" class="btn btn-danger">Xóa</a> 
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- JavaScript để tìm kiếm -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const searchInput = document.getElementById('searchInput');
+        const tableBody = document.getElementById('courseTableBody');
+
+        // Hàm lọc bảng
+        function filterTable() {
+            const filterValue = searchInput.value.toLowerCase();
+            const rows = tableBody.querySelectorAll('tr');
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                let matchFound = false;
+
+                // Duyệt qua các ô (td) trong mỗi hàng
+                for (let i = 0; i < cells.length; i++) {
+                    const cellValue = cells[i].textContent.toLowerCase();
+                    if (cellValue.includes(filterValue)) {
+                        matchFound = true;
+                        break;
+                    }
+                }
+
+                // Hiển thị hàng nếu tìm thấy từ khóa, ngược lại ẩn đi
+                row.style.display = matchFound ? '' : 'none';
+            });
+        }
+
+        // Lắng nghe sự kiện nhập liệu để lọc bảng
+        searchInput.addEventListener('input', filterTable);
+    });
+</script>
+
+{% endblock content %}

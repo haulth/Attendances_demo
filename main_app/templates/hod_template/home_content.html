@@ -1,0 +1,278 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+{% block page_title %}{{page_title}}{% endblock page_title %}
+{% block content %}
+<section class="content">
+    <div class="container-fluid">
+        <!-- Small boxes (Stat box) -->
+        <div class="row">
+            <div class="col-lg-3 col-6">
+                <!-- small box -->
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h3>{{total_students}}</h3>
+                        <p>Tổng số học sinh</p>
+                    </div>
+                    <div class="icon">
+                      <i class="nav-icon fas fa-user-graduate"></i>
+                    </div>
+                    <a href="{% url 'manage_student' %}" class="small-box-footer">Thông tin <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <!-- ./col -->
+            <div class="col-lg-3 col-6">
+                <!-- small box -->
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3>{{total_staff}}</h3>
+                        <p>Tổng số nhân viên</p>
+                    </div>
+                    <div class="icon">
+                      <i class="nav-icon fas fa-users"></i>
+                    </div>
+                    <a href="{% url 'manage_staff' %}" class="small-box-footer">Thông tin <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <!-- ./col -->
+            <div class="col-lg-3 col-6">
+                <!-- small box -->
+                <div class="small-box bg-purple">
+                    <div class="inner">
+                        <h3>{{total_course}}</h3>
+                        <p>Địa điểm dạy</p>
+                    </div>
+                    <div class="icon">
+                      <i class="nav-icon fas fa-th-list"></i>
+                    </div>
+                    <a href="{% url 'manage_course' %}" class="small-box-footer">Thông tin <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <!-- ./col -->
+            <div class="col-lg-3 col-6">
+                <!-- small box -->
+                <div class="small-box bg-danger">
+                    <div class="inner">
+                        <h3>{{total_subject}}</h3>
+                        <p>Tổng số lớp học</p>
+                    </div>
+                    <div class="icon">
+                      <i class="nav-icon fas fa-book"></i>
+                    </div>
+                    <a href="{% url 'manage_subject' %}" class="small-box-footer">Thông tin <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <!-- ./col -->
+        </div>
+        <!-- /.row -->
+        <!-- Main row -->
+        <div class="row">
+            <div class="col-md-6">
+                <!-- LINE CHART -->
+                <div class="card card-dark">
+                  <div class="card-header">
+                    <h3 class="card-title">Tổng quan về nhân viên và học sinh</h3>
+                    <div class="card-tools">
+                      <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i>
+                      </button>
+                      <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <div class="chart">
+                      <canvas id="pieChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                    </div>
+                  </div>
+                  <!-- /.card-body -->
+                </div>
+            </div>
+            <div class="col-md-6">
+                <!-- Bar Chart for Attendance -->
+                <div class="card card-dark">
+                  <div class="card-header">
+                    <h3 class="card-title">Điểm danh</h3>
+                    <div class="card-tools">
+                      <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i>
+                      </button>
+                      <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <div class="chart">
+                      <canvas id="barChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                    </div>
+                  </div>
+                </div>
+            </div>
+        </div>
+        <!-- /.row -->
+        <div class="row">
+          <div class="col-lg-12">
+            <!-- BAR CHART for Student Attendance and Leave Overview -->
+            <div class="card card-dark">
+              <div class="card-header">
+                <h3 class="card-title">Tổng quan về có mặt và vắng của học sinh</h3>
+                <div class="card-tools">
+                  <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
+                  <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="chart">
+                  <canvas id="barChart2" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div><!-- /.container-fluid -->
+</section>
+{% endblock content %}
+
+{% block custom_js %}
+  <script>
+      $(document).ready(function(){
+        var donutData        = {
+            labels: ['Học sinh', 'Nhân viên'],
+            datasets: [
+              {
+                data:[{{total_students}}, {{total_staff}}],
+                backgroundColor : ['#00a65a', '#f39c12'],
+              }
+            ]
+          }
+        var pieChartCanvas = $('#pieChart').get(0).getContext('2d');
+        var pieData        = donutData;
+        var pieOptions     = {
+          maintainAspectRatio : false,
+          responsive : true,
+        }
+        var pieChart = new Chart(pieChartCanvas, {
+          type: 'pie',
+          data: pieData,
+          options: pieOptions      
+        });
+
+        // Attendance by subject and day
+        var subject_list = {{ subject_list|safe|escape }};
+        var attendance_by_day = {{ attendance_by_day|safe|escape }}; 
+        var date_list = {{ date_list|safe|escape }}; 
+
+        var datasets = [];
+        subject_list.forEach(function(subject, index) {
+            datasets.push({
+                label               : subject,
+                backgroundColor     : getRandomColor(), 
+                borderColor         : 'rgba(60,141,188,0.8)',
+                pointRadius         : false,
+                pointColor          : '#3b8bba',
+                pointStrokeColor    : 'rgba(60,141,188,1)',
+                pointHighlightFill  : '#fff',
+                pointHighlightStroke: 'rgba(60,141,188,1)',
+                data                : attendance_by_day[index] 
+            });
+        });
+
+        function getRandomColor() {
+            var letters = '0123456789ABCDEF';
+            var color = '#';
+            for (var i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        var barChartData = {
+            labels  : date_list, 
+            datasets: datasets  
+        }
+
+        var barChartCanvas = $('#barChart').get(0).getContext('2d');
+
+        var stackedBarChartOptions = {
+            responsive              : true,
+            maintainAspectRatio     : false,
+            scales: {
+                xAxes: [{
+                    stacked: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Date' 
+                    }
+                }],
+                yAxes: [{
+                    stacked: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Attendance Count' 
+                    }
+                }]
+            }
+        }
+
+        var barChart = new Chart(barChartCanvas, {
+            type: 'bar',
+            data: barChartData,
+            options: stackedBarChartOptions
+        });
+
+        // Pie Chart for students in each course
+        var course_name_list = {{ course_name_list|safe }};
+        var student_count_list_in_course = {{ student_count_list_in_course }};
+        var pieData2 = {
+            labels: course_name_list,
+            datasets: [
+              {
+                data: student_count_list_in_course,
+                backgroundColor : ['#cc0404', '#00a65a', '#f39c12', '#00A4BD', '#045c8f', '#894e9c', '#9e4603', '#71bfb2'],
+              }
+            ]
+        }
+        var pieChartCanvas2 = $('#pieChart2').get(0).getContext('2d');
+        var pieOptions2     = {
+            maintainAspectRatio : false,
+            responsive : true,
+        }
+        var pieChart2 = new Chart(pieChartCanvas2, {
+            type: 'pie',
+            data: pieData2,
+            options: pieOptions2      
+        });
+
+        // Bar Chart for student attendance and leave overview
+        var student_attendance_present_list = {{ student_attendance_present_list }};
+        var student_attendance_leave_list = {{ student_attendance_leave_list }};
+        var student_name_list = {{ student_name_list|safe }};
+
+        var areaChartData2 = {
+            labels  : student_name_list,
+            datasets: [
+              {
+                label               : 'Vắng mặt',
+                backgroundColor     : '#b50a04',
+                borderColor         : '#b50a04',
+                data                : student_attendance_leave_list 
+              },
+              {
+                label               : 'Có mặt',
+                backgroundColor     : '#5a615c',
+                borderColor         : '#5a615c',
+                data                : student_attendance_present_list
+              },
+            ]
+        }
+
+        var barChartCanvas2 = $('#barChart2').get(0).getContext('2d');
+        var barChartOptions2 = {
+            responsive              : true,
+            maintainAspectRatio     : false,
+            datasetFill             : false
+        }
+
+        var barChart2 = new Chart(barChartCanvas2, {
+            type: 'bar', 
+            data: areaChartData2,
+            options: barChartOptions2
+        });
+      });
+  </script>
+{% endblock custom_js %}

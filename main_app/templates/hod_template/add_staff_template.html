@@ -1,0 +1,98 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+
+{% block page_title %}{{ page_title }}{% endblock page_title %}
+
+{% block custom_css %}
+  <style>
+    .invalid {
+      font-style: italic;
+      font-weight: bold;
+      color: red;
+    }
+    .valid {
+      font-style: italic;
+      font-weight: bold;
+      color: green;
+    }
+    .card-title {
+      font-weight: bold;
+      text-align: center;
+    }
+    .form-section {
+      padding: 20px;
+    }
+  </style>
+{% endblock custom_css %}
+
+{% block content %}
+<section class="content">
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-md-12">
+        <div class="card shadow-sm">
+          <div class="card-header bg-dark text-white">
+            <h3 class="card-title">Thêm giáo viên hàng loạt</h3>
+          </div>
+          
+          <!-- CSV Upload Form -->
+          <div class="card-body form-section">
+            <form method="post" enctype="multipart/form-data" action="{% url 'add_staff_csv' %}">
+              {% csrf_token %}
+              <div class="form-group">
+                <label for="file">Chọn file Excel (.xlsx):<a href="{% static 'files/Book_staff.xlsx' %}" > Tải form mẫu</a></label>
+                <input type="file" id="file" name="file" accept=".xlsx" class="form-control-file" required>
+              </div>
+              <button type="submit" class="btn btn-primary">Xác nhận</button>
+            </form>
+          </div>
+        </div>
+        
+        <!-- General form elements -->
+        <div class="card mt-3 shadow-sm">
+          <div class="card-header bg-dark text-white">
+            <h5 class="card-title">Thêm nhân viên thủ công</h5>
+          </div>
+          <div class="card-body form-section">
+            {% include "main_app/form_template.html" with messages=messages form=form button_text="Thêm nhân viên" %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock content %}
+
+{% block custom_js %}
+<script>
+  function validateEmail(email) {
+    const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
+  }
+
+  $(document).ready(function() {
+    $("#id_email").keyup(function() {
+      var email = $(this).val();
+      if (validateEmail(email)) {
+        $.ajax({
+          url: "{% url 'check_email_availability' %}",
+          type: 'POST',
+          data: {email: email}
+        }).done(function(response) {
+          $(".email_error").remove();
+          if (response == "True") {
+            $("<span class='invalid email_error'>Địa chỉ Email đã tồn tại</span>").insertAfter("#id_email");
+          } else {
+            $("<span class='valid email_error'>Địa chỉ Email hợp lệ</span>").insertAfter("#id_email");
+          }
+        }).fail(function() {
+          $(".email_error").remove();
+          $("<span class='alert alert-warning email_error'>Máy chủ không thể xử lý việc này</span>").insertAfter("#id_email");
+        });
+      } else {
+        $(".email_error").remove();
+      }
+    });
+  });
+</script>
+{% endblock custom_js %}

@@ -1,0 +1,180 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+{% block page_title %}{{page_title}}{% endblock page_title %}
+
+{% block content %}
+
+
+<section class="content">
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
+    <form id="attendance-form">
+        {% csrf_token %}
+        <div class="row">
+            
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="session_id">Chọn trường</label>
+                    <select name="session_id" id="session_id" class="form-control">
+                        {% for session in sessions %}
+                        <option value="{{ session.id }}">{{ session }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="subject_id">Chọn lớp</label>
+                    <select name="subject_id" id="subject_id" class="form-control">
+                        {% for subject in subjects %}
+                        <option value="{{ subject.id }}">{{ subject.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="date">Ngày</label>
+                    <input type="date" name="date" id="date" class="form-control" />
+                </div>
+            </div>
+            <div class="col-md-2" style="margin-top: 8px;">
+                <button type="button" id="scan-qr-btn" class="btn btn-primary btn-block mt-4">Quét mã QR</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div id="qr-reader" style="width: 100%; max-width: 400px; height: auto; border: 2px solid #000; padding: 10px;">
+                
+            </div>
+            <div id="qr-reader-results" class="mt-3"></div>
+        </div>
+
+        <div class="col-md-6">
+            <h4>Danh sách học sinh đã điểm danh</h4>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Mã Học Sinh</th>
+                        <th>Họ Tên</th>
+                        <th>Thời gian điểm danh</th>
+                    </tr>
+                </thead>
+                <tbody id="attendance-list">
+                  
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endblock content %}
+
+{% block custom_js %}
+<script>
+
+    $(document).ready(function() {
+        
+        $('#session_id').change(function() {
+            var session_id = $(this).val(); // Lấy ID trường đã chọn
+            console.log('gia trị da chọn: ', session_id)
+
+            
+            if (session_id == "") {
+                $('#subject_id').html('<option value="">----</option>');
+                return;
+            }
+
+            // Gửi Ajax để lấy danh sách lớp theo trường
+            $.ajax({
+                url: "{% url 'get_subjects_by_session_staff' %}", 
+                type: "GET",
+                data: {
+                    session_id: session_id
+                },
+                success: function(response) {
+                    
+                    var subjects = response.subjects;
+                    var html = '<option value="">----</option>';
+                    for (var i = 0; i < subjects.length; i++) {
+                        html += '<option value="' + subjects[i].id + '">' + subjects[i].name + '</option>';
+                    }
+                    $('#subject_id').html(html); // Cập nhật dropdown của lớp học
+                },
+                error: function() {
+                    alert("Lỗi khi lấy danh sách lớp học");
+                }
+            });
+        });
+    });
+
+    document.getElementById("scan-qr-btn").addEventListener("click", function () {
+        console.log("Bắt đầu quét mã QR");
+        var subject_id = document.getElementById("subject_id").value;
+        var session_id = document.getElementById("session_id").value;
+        var date = document.getElementById("date").value;
+
+        if (!subject_id || !session_id || !date) {
+            alert("Vui lòng chọn đầy đủ thông tin trước khi quét mã QR");
+            return;
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            $.ajax({
+                url: "{% url 'qr_code_scanner' %}",
+                type: "POST",
+                data: {
+                    subject_id: subject_id,
+                    session_id: session_id,
+                    date: date,
+                    qr_code_data: decodedText,
+                    csrfmiddlewaretoken: document.querySelector("[name=csrfmiddlewaretoken]").value
+                },
+                success: function(response) {
+                    var alertClass = response.status === "success" ? "alert-success" : "alert-danger";
+                    $("#qr-reader-results").html(
+                        "<div class='alert " + alertClass + "' role='alert'>" + response.message + "</div>"
+                    );
+                    
+                    if (response.status === "success") {
+                        var studentRow = "<tr><td>" + ($("#attendance-list tr").length + 1) + "</td><td>" + response.student_id + "</td><td>" + response.student_name + "</td><td>" + response.timestamp + "</td></tr>";
+                        $("#attendance-list").append(studentRow);
+                    }
+
+                    setTimeout(function() {
+                        $("#qr-reader-results").html("");
+                    }, 3000);
+                },
+                error: function() {
+                    $("#qr-reader-results").html("<div class='alert alert-danger' role='alert'>Lỗi khi quét mã QR</div>");
+                    setTimeout(function() {
+                        $("#qr-reader-results").html("");
+                    }, 3000);
+                }
+            });
+        }
+
+        function onScanFailure(error) {
+            console.warn(`Quét thất bại: ${error}`);
+        }
+
+        let html5QrCode = new Html5Qrcode("qr-reader");
+        html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            onScanSuccess,
+            onScanFailure
+        ).catch(err => {
+            console.log(`Không thể khởi động QR code scanner: ${err}`);
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+        var today = new Date().toISOString().split('T')[0];
+        document.getElementById('date').value = today;
+    });
+</script>
+{% endblock custom_js %}

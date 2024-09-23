@@ -1,0 +1,399 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+{% block page_title %}{{page_title}}{% endblock page_title %}
+{% block custom_css %}
+<style>
+.attendance_div_red{
+    padding: 10px;
+    background: #f44336;
+    border: 3px solid white;
+    text-align: center;
+    color: #fff;
+    border-radius: 30px;
+    box-shadow: 1px 1px 1px grey;
+    margin: 5px;
+}
+.attendance_div_green{
+    padding: 10px;
+    background: #4CAF50;
+    border: 3px solid white;
+    text-align: center;
+    color: #fff;
+    border-radius: 30px;
+    box-shadow: 1px 1px 1px grey;
+    margin: 5px;
+}
+</style>
+{% endblock custom_css %}
+{% block content %}
+
+<section class="content">
+    <div class="alert alert-success" id="success_message" style="display: none;">Xóa dữ liệu điểm danh thành công!</div>
+    <div class="alert alert-danger" id="error_message" style="display: none;">Có lỗi xảy ra khi xóa dữ liệu!</div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <!-- general form elements -->
+                <div class="card card-dark">
+                    <div class="card-header">
+                        <h3 class="card-title">{{page_title}}</h3>
+                    </div>
+
+                    <!-- /.card-header -->
+                    <!-- form start -->
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>Chọn trường</label>
+                            <select name="session" class="form-control" id='session'>
+                                <option value="">----</option>
+                                {% for session in sessions  %}
+                                <option value="{{session.id}}">{{session}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Chọn lớp</label>
+                            <select name="subject" class="form-control" id='subject'>
+                                <option value="">----</option>
+                                {% for subject in subjects  %}
+                                <option value="{{subject.id}}">{{subject.name}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group"><div  style="display: none;" class="alert alert-danger" id='error_attendance'></div>
+                                <div class="alert alert-success" id='success_attendance' style="display: none;"></div>
+                             <button type="button" id='fetch_attendance' class="btn btn-success btn-block">Truy xuất dữ liệu điểm danh</button>
+                        </div>
+                    <!-- /.card-body -->
+                    
+                        
+                            <div class="form-group" style="display: none;" id='controll'>
+                                <label>Chọn chế độ</label>
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="modeSwitch">
+                                    <label class="custom-control-label" for="modeSwitch">Chọn khoảng thời gian</label>
+                                </div>
+                            </div>
+                      
+                            <div class="form-group" style="display: none;" id="attendance_block">
+                                <div class="form-group" id="singleDatePicker">
+                                    <label>Ngày điểm danh</label>
+                                    <select id='attendance_date' name='attendance_date' class="form-control"></select>
+                                </div>
+                                
+                                <div class="form-group d-none" id="dateRangePicker">
+                                    <label>Chọn khoảng thời gian</label>
+                                    <input type="date" id="start_date" class="form-control" style="margin-bottom: 10px;">
+                                    <input type="date" id="end_date" class="form-control">
+                                </div>
+                            </div>
+                            
+                                
+                            <div id="fetch_student_block" style="display: none;">
+                                <button type="button" id='fetch_student' class="btn btn-success btn-block">Lấy danh sách học sinh</button>
+                            </div>
+                            <div id='student_data' class="card-footer">
+
+                            </div>
+
+                            <div class="form-group" id="export_block" style="display: none;">
+                                <button type="button" id="export_attendance" class="btn btn-primary btn-block">Xuất dữ liệu ra Excel</button>
+                            </div>
+
+                            <div class="form-group" id="delete_block" style="display: none;">
+                                <button type="button" id="delete_attendance" class="btn btn-danger btn-block">Xóa dữ liệu điểm danh</button>
+                            </div>
+                                                     
+                        </div>
+                    </div>  
+                </div>
+                <!-- /.card -->
+
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock content %}
+
+
+{% block custom_js %}
+{% csrf_token %}
+
+<script>
+
+    var formattedDate = "";  // Khai báo biến toàn cục
+    var subject = ""; 
+    
+    $('#delete_attendance').click(function () {
+        var subject_id = $('#subject').val();
+        var session_id = $('#session').val();
+        var start_date = $("#start_date").val(); // Sửa ở đây
+        console.log('nbd: ', start_date);
+        var end_date = $("#end_date").val(); // Sửa ở đây
+        console.log('nkt: ', end_date);
+        var attendance_date = $("#attendance_date option:selected").text();
+    
+        $.ajax({
+            url: "{% url 'delete_attendance' %}",
+            method: 'POST',
+            data: {
+                subject_id: subject_id,
+                session_id: session_id,
+                start_date: start_date,
+                end_date: end_date,
+                attendance_date: attendance_date,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function (response) {
+                if (response.status === 'success') {
+                    $('#success_message').show().delay(3000).fadeOut(); // Hiển thị thông báo thành công và ẩn sau 3 giây
+                    $('#student_data').html('');
+                    $('#delete_block').hide();
+                } else {
+                    $('#error_message').text(response.message || 'Có lỗi xảy ra khi xóa dữ liệu!').show().delay(3000).fadeOut(); // Hiển thị thông báo lỗi và ẩn sau 3 giây
+                }
+            },
+            error: function () {
+                $('#error_message').text('Lỗi trong quá trình xóa dữ liệu điểm danh!').show().delay(3000).fadeOut(); // Hiển thị thông báo lỗi và ẩn sau 3 giây
+            }
+        });
+    });
+    
+    
+    $(document).ready(function() {
+        
+        $('#session').change(function() {
+            var session_id = $(this).val(); // Lấy ID trường đã chọn
+
+            
+            if (session_id == "") {
+                $('#subject').html('<option value="">----</option>');
+                return;
+            }
+
+            // Gửi Ajax để lấy danh sách lớp theo trường
+            $.ajax({
+                url: "{% url 'get_subjects_by_session' %}", 
+                type: "GET",
+                data: {
+                    session_id: session_id
+                },
+                success: function(response) {
+                    
+                    var subjects = response.subjects;
+                    var html = '<option value="">----</option>';
+                    for (var i = 0; i < subjects.length; i++) {
+                        html += '<option value="' + subjects[i].id + '">' + subjects[i].name + '</option>';
+                    }
+                    $('#subject').html(html); // Cập nhật dropdown của lớp học
+                },
+                error: function() {
+                    alert("Lỗi khi lấy danh sách lớp học");
+                }
+            });
+        });
+    });
+
+    document.getElementById('modeSwitch').addEventListener('change', function() {
+            if (this.checked) {
+                // Chọn khoảng thời gian
+                document.getElementById('singleDatePicker').classList.add('d-none');
+                document.getElementById('dateRangePicker').classList.remove('d-none');
+            } else {
+                // Chọn một ngày
+                document.getElementById('singleDatePicker').classList.remove('d-none');
+                document.getElementById('dateRangePicker').classList.add('d-none');
+            }
+        });
+    
+
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    var csrftoken = getCookie('csrftoken');
+    
+    $(document).ready(function () {
+        $("#fetch_attendance").click(function(){
+            var subject = $("#subject").val();
+            var session = $("#session").val();
+            var start_date = $("#start_date").val();
+            var end_date = $("#end_date").val();
+            //var attendance_type = $("#modeSwitch").prop("checked") ? "range" : "single";
+            //console.log('chế độ: ',attendance_type);
+        
+            $("#student_data").html("");
+            
+            if (session.length < 1 || subject.length < 1) {
+                $("#error_attendance").html("Vui lòng chọn cả môn học và thời gian");
+                $("#error_attendance").show();
+                $("#controll").hide();
+                return false;
+            }
+        
+            $.ajax({
+                url: "{% url 'get_attendance' %}",
+                type: 'POST',
+                headers: { "X-CSRFToken": csrftoken },
+                data: {
+                    subject: subject,
+                    session: session,
+                    start_date: start_date,
+                    end_date: end_date,
+                    //attendance_type: attendance_type
+                }
+            }).done(function(response){
+                var json_data = JSON.parse(response);
+                if (json_data.length > 0){
+                    var html = "";
+                    for (key in json_data){
+                        var date = new Date(json_data[key]['attendance_date']);
+                        console.log("ngày form chọn: ", date);
+                        formattedDate = ('0' + date.getDate()).slice(-2) + '/' + 
+                                        ('0' + (date.getMonth() + 1)).slice(-2) + '/' + 
+                                        date.getFullYear();
+                        console.log("ngày: ", formattedDate);
+                        html += "<option value='"+json_data[key]['id']+"'>"+formattedDate+"</option>";
+                    }
+                    $("#attendance_date").html(html);
+                    $("#error_attendance").hide();
+                    $("#attendance_block").show();
+                    $("#controll").show();
+                    $("#fetch_student_block").show();
+                } else {
+                    $("#error_attendance").html("Không tìm thấy dữ liệu được chỉ định");
+                    $("#error_attendance").show();
+                    $("#attendance_date").html("");
+                    $("#attendance_block").hide();
+                    $("#controll").hide();
+                    $("#student_data").html("");
+                }
+            }).fail(function(response){ 
+                alert("Lỗi khi tìm nạp dữ liệu");
+                $("#error_attendance").html("");
+                $("#error_attendance").show();
+                $("#attendance_block").hide();
+                $("#controll").hide();
+                $("#student_data").html("");
+            });
+        });
+    
+        $("#fetch_student").click(function () {
+            var attendance_date = $("#attendance_date").val();
+            console.log('ID ngày lấy dữ liệu: ',attendance_date);
+            var session = $("#session").val();
+            var subject = $("#subject").val();
+            var start_date = $("#start_date").val();
+            var end_date = $("#end_date").val();
+            
+            $("#student_data").html(null);
+            
+            if (attendance_date.length == 0 && (start_date.length == 0 || end_date.length == 0)) {
+                alert("Vui lòng chọn một ngày hoặc một khoảng thời gian");
+                return false;
+            }
+            
+            $.ajax({
+                url: "{% url 'get_admin_attendance' %}",
+                type: 'POST',
+                headers: { "X-CSRFToken": csrftoken },
+                dataType: 'json',  // Đảm bảo dữ liệu trả về là JSON
+                data: {
+                    attendance_date_id: attendance_date,
+                    session: session,
+                    subject: subject,
+                    start_date: start_date,
+                    end_date: end_date
+                }
+            }).done(function (response) {
+                // Dữ liệu trả về đã là JSON, không cần JSON.parse
+                if (response.length < 1) {
+                    alert("Không có dữ liệu để hiển thị");
+                } else {
+                    var div_data = "<hr/><div class='form-group'></div><div class='form-group'><label>Học sinh có mặt</label><div class='row'>";
+                    for (key in response) {
+                        if (response[key]['status'] == true) {
+                            div_data += "<div class='col-lg-3 attendance_div_green'><b>" + response[key]['student_name'] + "</b><br/>Có mặt</div>";
+                        } else {
+                            div_data += "<div class='col-lg-3 attendance_div_red'><b>" + response[key]['student_name'] + "</b><br/>Vắng mặt</div>";
+                        }
+                    }
+                    div_data += "</div></div>";
+                    $("#student_data").html(div_data);
+                    $("#export_block").show();  
+                    $("#delete_block").show();
+                }
+            }).fail(function () {
+                alert("Lỗi khi tìm học sinh");
+            });
+        });
+        
+        // Export attendance to Excel
+        $(document).ready(function () {
+            $("#export_attendance").click(function () {
+                // Get the selected option text from the dropdown
+                var selectedOptionText = $("#attendance_date option:selected").text();
+                console.log('Ngày xuất dữ liệu: ', selectedOptionText);
+        
+                // Validate that an option is selected
+                if (!selectedOptionText) {
+                    alert("Vui lòng chọn ngày điểm danh để xuất dữ liệu.");
+                    return false;
+                }
+        
+                // Retrieve other values from the form
+                var subject = $("#subject").val();
+                var session = $("#session").val();
+                var start_date = $("#start_date").val();
+                var end_date = $("#end_date").val();
+                var attendance_type = $("#modeSwitch").prop("checked") ? "range" : "single";
+        
+                // Perform the AJAX request to export attendance data to Excel
+                $.ajax({
+                    url: "{% url 'export_attendance' %}", // Update with the correct URL
+                    type: 'POST',
+                    headers: { "X-CSRFToken": csrftoken }, // CSRF token for Django
+                    data: {
+                        subject: subject,
+                        session: session,
+                        attendance_date: selectedOptionText, // Send the selected option text
+                        start_date: start_date,
+                        end_date: end_date,
+                        attendance_type: attendance_type
+                    },
+                    xhrFields: {
+                        responseType: 'blob' // Ensure the response is treated as a binary file (Excel)
+                    },
+                    success: function (blob, status, xhr) {
+                        // Create a downloadable link for the Excel file
+                        var link = document.createElement('a');
+                        link.href = window.URL.createObjectURL(blob); // Create a URL for the blob
+                        link.download = "DANH_SACH_DIEM_DANH.xlsx"; // Set download filename
+                        document.body.appendChild(link); // Append link to body
+                        link.click(); // Trigger download
+                        document.body.removeChild(link); // Clean up by removing the link
+                    },
+                    error: function () {
+                        alert("Lỗi khi xuất dữ liệu"); // Display error if something goes wrong
+                    }
+                });
+            });
+        });
+          
+    });
+</script>
+
+
+{% endblock custom_js %}

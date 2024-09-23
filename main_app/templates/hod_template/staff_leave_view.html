@@ -1,0 +1,145 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+{% block page_title %}{{page_title}}{% endblock page_title %}
+
+{% block content %}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <!-- general form elements -->
+                <div class="card card-dark">
+                    <div class="card-header">
+                        <h3 class="card-title">{{page_title}}</h3>
+                    </div>
+
+                    <div class="table card-body">
+                        <table class="table table-bordered table-hover">
+                            <tr>
+                                <th>#</th>
+                                <th>Nhân viên</th>
+                                <th>Khóa học</th>
+                                <th>Tin nhắn</th>
+                                <th>Ngày nghỉ phép</th>
+                                <th>Đã nộp vào ngày</th>
+                                <th>Hành động</th>
+
+                            </tr>
+                            {% for leave in  allLeave %}
+                              <tr>
+                                  <td>{{forloop.counter}}</td>
+                                  <td>{{leave.staff}}</td>
+                                  <td>{{leave.staff.course}}</td>
+                                  <td>{{leave.message}}</td>
+                                  {% comment %} <td>{{leave.date}}</td> {% endcomment %}
+                                  <td>{{ leave.date|slice:"8:10" }}/{{ leave.date|slice:"5:7" }}/{{ leave.date|slice:":4" }}</td>
+
+                                  <td>{{ leave.created_at|date:"d/m/Y" }}</td>
+  
+                                    {% if leave.status == 0 %}
+                                        <td><button data-toggle = "modal" data-target = "#reply_modal" value="{{leave.id}}" class="btn btn-success reply_open_modal">Trả lời</button></td>
+                                    {% elif leave.status == -1 %}
+                                    <td>
+                                        <span  class='badge badge-danger'>Từ chối</span>
+                                    </td>
+                                    {% else %}
+                                        <td><span  class='badge badge-success'>Đã được chấp thuận</span></td>
+                                        <td>{{feedback.updated_at}}</td>
+                                    {% endif %}                                          
+                                  </td>                       
+                              </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                    </div>
+                <!-- /.card -->
+
+            </div>
+        </div>
+    </div>
+</section>
+<div class = "modal fade" id = "reply_modal" tabindex = "-1" role = "dialog" 
+   aria-labelledby = "myModalLabel" aria-hidden = "true">
+   
+   <div class = "modal-dialog">
+      <div class = "modal-content">
+         
+         <div class = "modal-header">
+            <button type = "button" class = "close" data-dismiss = "modal" aria-hidden = "true">
+                  &times;
+            </button>
+            
+            <h4 class = "modal-title" id = "myModalLabel">
+               
+            </h4>
+         </div>
+         
+         <div class = "modal-body">
+             <input type="hidden"  id="id">
+             <p> Trả lời yêu cầu nghỉ phép của <span id="reply_name"></span></p>
+
+           <select id="reply_leave_status" class="form-control">
+            <option value="">-- Chọn --</option>
+            <option value="1">Phê duyệt</option>
+            <option value="-1">Từ chối</option>
+            
+           </select>
+        </div>
+        
+        <div class = "modal-footer">
+            <button type = "button" class = "btn btn-danger" data-dismiss = "modal">
+                Đóng
+            </button>
+            
+            <button id="reply_btn" class="btn btn-success btn-block">Xác nhận</button>
+         
+         </div>
+         
+      </div><!-- /.modal-content -->
+   </div><!-- /.modal-dialog -->
+  
+</div><!-- /.modal -->
+{% endblock content %}
+{% block custom_js %}
+  <script>
+      $(document).ready(function(){
+          $(".reply_open_modal").click(function(){
+              var id = $(this).val()
+              var name = $(this).parents("tr").children("td:eq(1)").text()
+              $("#reply_name").text(name)
+              $("#id").val(id)
+              
+              
+            })
+            
+            $("#reply_btn").on("click", function(){
+                var id = $("#id").val()
+                var status = $("#reply_leave_status").val()
+                if (status == '1' || status == '-1'){
+
+    $.ajax({
+        url: "{% url 'view_staff_leave' %}",
+        type:'POST',
+        data:{
+              id:id,
+              status:status
+        }
+    }).done(function(response){
+        if (response == "True"){
+            alert("Phản hồi về ngày nghỉ phép đã được lưu!")
+            location.reload()
+        }else{
+            alert("Phản hồi không thể gửi được")
+        }
+    }).fail(function(response){
+        alert("Đã xảy ra lỗi. ")
+    })
+}else{
+    alert("Chọn phản hồi hợp l")
+}
+
+          })
+      })
+  </script>
+{% endblock custom_js %}

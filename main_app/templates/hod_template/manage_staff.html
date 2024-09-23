@@ -1,0 +1,195 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+{% block page_title %}
+  {{ page_title }}
+{% endblock %}
+
+{% block content %}
+
+<style>
+  .table-responsive {
+    overflow-x: auto;
+  }
+  
+</style>
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h3 class="card-title">{{ page_title }}</h3>
+              <!-- Căn chỉnh nút xuất và ô tìm kiếm sang bên phải -->
+              <div class="ml-auto d-flex align-items-center" style="flex-wrap: nowrap;">
+                <!-- Nút xuất dữ liệu ra Excel -->
+                <button id="export_button" class="btn btn-success" style="white-space: nowrap; margin-right: 2px;">
+                  <i class="fas fa-file-excel"></i> Xuất dữ liệu ra Excel
+                </button> 
+              
+                <!-- Ô tìm kiếm với khoảng cách 2px bên cạnh nút -->
+                <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Tìm kiếm..." class="form-control" style="max-width: 250px;">
+              </div>
+              
+            </div>
+            
+            <div class="card-body">
+              <div class='table-responsive'>
+                <table id="example2" class="table table-bordered table-hover">
+                  <thead class="thead-dark">
+                    <tr>
+                      <th>#</th>
+                      <th>Tên giáo viên</th>
+                      <th>Email</th>
+                      <th>Giới tính</th>
+                      <th>Ảnh đại diện</th>
+                      <th>Hành động</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for staff in allStaff %}
+                      <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ staff.last_name }} {{ staff.first_name }}</td>
+                        <td>{{ staff.email }}</td>
+                        <td>
+                          {% if staff.gender == 'M' %}
+                            Nam
+                          {% elif staff.gender == 'F' %}
+                            Nữ
+                          {% else %} 
+                            Không xác định
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if staff.profile_pic == '' %}
+                            Không có ảnh
+                          {% else %}
+                            <img class="img img-fluid mb-2" height="56" width="56" src="{{ staff.profile_pic }}" alt="" />
+                          {% endif %}
+                        </td>
+                        <td>
+                          <a href="{% url 'edit_staff' staff.staff.id %}" class="btn btn-info">Chỉnh sửa</a> - 
+                          <a href="{% url 'delete_staff' staff.staff.id %}" class="btn btn-danger" onclick="return confirm('Bạn có chắc chắn về điều này không?')">Xóa</a>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js" integrity="sha512-UnrKxsCMN9hFk7M56t4I4ckB4N/2HHi0w/7+B/1JsXIX3DmyBcsGpT3/BsuZMZf+6mAr0vP81syWtfynHJ69JA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script> 
+
+<!-- Tìm kiếm trong bảng -->
+<script>
+  function searchTable() {
+    var input = document.getElementById("searchInput");
+    var filter = input.value.toLowerCase();
+    var table = document.getElementById("example2");
+    var tr = table.getElementsByTagName("tr");
+
+    // Lặp qua tất cả các hàng trừ hàng tiêu đề
+    for (var i = 1; i < tr.length; i++) {
+      var tdArray = tr[i].getElementsByTagName("td");
+      var found = false;
+
+      // Lặp qua tất cả các ô trong hàng
+      for (var j = 0; j < tdArray.length - 1; j++) {
+        var td = tdArray[j];
+        if (td) {
+          if (td.innerHTML.toLowerCase().indexOf(filter) > -1) {
+            found = true;
+            break;
+          }
+        }
+      }
+
+      // Ẩn hoặc hiển thị hàng dựa trên kết quả tìm kiếm
+      tr[i].style.display = found ? "" : "none";
+    }
+  }
+</script>
+
+<!-- Xuất dữ liệu ra Excel -->
+<script>
+  document.getElementById('export_button').addEventListener('click', async function () {
+    var workbook = new ExcelJS.Workbook();
+    var worksheet = workbook.addWorksheet('Sheet1');
+
+    worksheet.columns = [
+        { header: '#', key: 'index', width: 5 },
+        { header: 'Tên giáo viên', key: 'full_name', width: 20 },
+        { header: 'Email', key: 'email', width: 25 },
+        { header: 'Giới tính', key: 'gender', width: 10 },
+        { header: 'Ảnh đại diện', key: 'profile_pic', width: 20 }
+    ];
+
+    // Style the header row: bold and centered
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).alignment = { horizontal: 'center', vertical: 'middle' };
+
+    var rows = document.querySelectorAll('#example2 tbody tr');
+
+    let rowImages = [];
+
+    // Chỉ thêm các hàng hiển thị vào file Excel
+    for (let row of rows) {
+        if (row.style.display !== 'none') {  // Chỉ xử lý các hàng đang hiển thị
+            var cells = row.querySelectorAll('td');
+            var rowData = {
+                index: cells[0].innerText,
+                full_name: cells[1].innerText,
+                email: cells[2].innerText,
+                gender: cells[3].innerText,
+            };
+
+            worksheet.addRow(rowData);
+
+            // Center align each cell in the current row
+            worksheet.lastRow.eachCell((cell) => {
+                cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            });
+
+            // Lưu hình ảnh để xử lý sau
+            if (cells[4].querySelector('img')) {
+                rowImages.push({ src: cells[4].querySelector('img').src, row: worksheet.lastRow.number, col: 5 });
+            }
+        }
+    }
+
+    // Tải và thêm ảnh vào Excel
+    let imagePromises = rowImages.map((image) => fetch(image.src).then((response) => response.arrayBuffer()));
+    let imageBuffers = await Promise.all(imagePromises);
+
+    rowImages.forEach((image, index) => {
+        const imageId = workbook.addImage({
+            buffer: imageBuffers[index],
+            extension: 'png'
+        });
+
+        worksheet.addImage(imageId, {
+            tl: { col: image.col - 1, row: image.row - 1 },
+            ext: { width: 100, height: 100 }
+        });
+
+        worksheet.getRow(image.row).height = 85;
+        worksheet.getCell(image.row, image.col).alignment = { horizontal: 'center', vertical: 'middle' };
+    });
+
+    // Write workbook to buffer and save as file
+    workbook.xlsx.writeBuffer().then(function (buffer) {
+        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'danh sách giáo viên.xlsx');
+    });
+});
+</script>
+
+{% endblock %}
