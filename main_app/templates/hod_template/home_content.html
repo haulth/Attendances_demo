@@ -1,278 +1,297 @@
 {% extends 'main_app/base.html' %}
 {% load static %}
-{% block page_title %}{{page_title}}{% endblock page_title %}
+{% block page_title %}
+  {{ page_title }}
+{% endblock %}
 {% block content %}
-<section class="content">
+  <section class="content">
     <div class="container-fluid">
-        <!-- Small boxes (Stat box) -->
-        <div class="row">
-            <div class="col-lg-3 col-6">
-                <!-- small box -->
-                <div class="small-box bg-info">
-                    <div class="inner">
-                        <h3>{{total_students}}</h3>
-                        <p>Tổng số học sinh</p>
-                    </div>
-                    <div class="icon">
-                      <i class="nav-icon fas fa-user-graduate"></i>
-                    </div>
-                    <a href="{% url 'manage_student' %}" class="small-box-footer">Thông tin <i class="fas fa-arrow-circle-right"></i></a>
-                </div>
+      <!-- Small boxes (Stat box) -->
+      <div class="row">
+        <div class="col-lg-3 col-6">
+          <!-- small box -->
+          <div class="small-box bg-info">
+            <div class="inner">
+              <h3>{{ total_students }}</h3>
+              <p>Tổng số học sinh</p>
             </div>
-            <!-- ./col -->
-            <div class="col-lg-3 col-6">
-                <!-- small box -->
-                <div class="small-box bg-success">
-                    <div class="inner">
-                        <h3>{{total_staff}}</h3>
-                        <p>Tổng số nhân viên</p>
-                    </div>
-                    <div class="icon">
-                      <i class="nav-icon fas fa-users"></i>
-                    </div>
-                    <a href="{% url 'manage_staff' %}" class="small-box-footer">Thông tin <i class="fas fa-arrow-circle-right"></i></a>
-                </div>
+            <div class="icon">
+              <i class="nav-icon fas fa-user-graduate"></i>
             </div>
-            <!-- ./col -->
-            <div class="col-lg-3 col-6">
-                <!-- small box -->
-                <div class="small-box bg-purple">
-                    <div class="inner">
-                        <h3>{{total_course}}</h3>
-                        <p>Địa điểm dạy</p>
-                    </div>
-                    <div class="icon">
-                      <i class="nav-icon fas fa-th-list"></i>
-                    </div>
-                    <a href="{% url 'manage_course' %}" class="small-box-footer">Thông tin <i class="fas fa-arrow-circle-right"></i></a>
-                </div>
-            </div>
-            <!-- ./col -->
-            <div class="col-lg-3 col-6">
-                <!-- small box -->
-                <div class="small-box bg-danger">
-                    <div class="inner">
-                        <h3>{{total_subject}}</h3>
-                        <p>Tổng số lớp học</p>
-                    </div>
-                    <div class="icon">
-                      <i class="nav-icon fas fa-book"></i>
-                    </div>
-                    <a href="{% url 'manage_subject' %}" class="small-box-footer">Thông tin <i class="fas fa-arrow-circle-right"></i></a>
-                </div>
-            </div>
-            <!-- ./col -->
-        </div>
-        <!-- /.row -->
-        <!-- Main row -->
-        <div class="row">
-            <div class="col-md-6">
-                <!-- LINE CHART -->
-                <div class="card card-dark">
-                  <div class="card-header">
-                    <h3 class="card-title">Tổng quan về nhân viên và học sinh</h3>
-                    <div class="card-tools">
-                      <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i>
-                      </button>
-                      <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
-                    </div>
-                  </div>
-                  <div class="card-body">
-                    <div class="chart">
-                      <canvas id="pieChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
-                    </div>
-                  </div>
-                  <!-- /.card-body -->
-                </div>
-            </div>
-            <div class="col-md-6">
-                <!-- Bar Chart for Attendance -->
-                <div class="card card-dark">
-                  <div class="card-header">
-                    <h3 class="card-title">Điểm danh</h3>
-                    <div class="card-tools">
-                      <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i>
-                      </button>
-                      <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
-                    </div>
-                  </div>
-                  <div class="card-body">
-                    <div class="chart">
-                      <canvas id="barChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
-                    </div>
-                  </div>
-                </div>
-            </div>
-        </div>
-        <!-- /.row -->
-        <div class="row">
-          <div class="col-lg-12">
-            <!-- BAR CHART for Student Attendance and Leave Overview -->
-            <div class="card card-dark">
-              <div class="card-header">
-                <h3 class="card-title">Tổng quan về có mặt và vắng của học sinh</h3>
-                <div class="card-tools">
-                  <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
-                  <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
-                </div>
-              </div>
-              <div class="card-body">
-                <div class="chart">
-                  <canvas id="barChart2" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
-                </div>
-              </div>
-            </div>
+            <a href="{% url 'manage_student' %}" class="small-box-footer">Thông tin <i class="fas fa-arrow-circle-right"></i></a>
           </div>
         </div>
-    </div><!-- /.container-fluid -->
-</section>
-{% endblock content %}
+        <!-- ./col -->
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-success">
+            <div class="inner">
+              <h3>{{ total_staff }}</h3>
+              <p>Tổng số giáo viên</p>
+            </div>
+            <div class="icon">
+              <i class="nav-icon fas fa-users"></i>
+            </div>
+            <a href="{% url 'manage_staff' %}" class="small-box-footer">Thông tin <i class="fas fa-arrow-circle-right"></i></a>
+          </div>
+        </div>
+        <!-- ./col -->
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-purple">
+            <div class="inner">
+              <h3>{{ total_course }}</h3>
+              <p>Địa điểm dạy</p>
+            </div>
+            <div class="icon">
+              <i class="nav-icon fas fa-th-list"></i>
+            </div>
+            <a href="{% url 'manage_course' %}" class="small-box-footer">Thông tin <i class="fas fa-arrow-circle-right"></i></a>
+          </div>
+        </div>
+        <!-- ./col -->
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-light"> 
+            <div class="inner">
+              <h3>{{ total_subject }}</h3>
+              <p>Tổng số lớp học</p>
+            </div>
+            <div class="icon">
+              <i class="nav-icon fas fa-door-open"></i>
 
+            </div>
+            <a href="{% url 'manage_subject' %}" class="small-box-footer">Thông tin <i class="fas fa-arrow-circle-right"></i></a>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-yellow">
+            <div class="inner">
+              <h3>{{ total_teaching }}</h3>
+              <p>Tông số lịch dạy</p>
+            </div>
+            <div class="icon">
+              <i class="nav-icon fas fa-book"></i>
+            </div>
+            <a href="{% url 'manage_session' %}" class="small-box-footer">Thông tin <i class="fas fa-arrow-circle-right"></i></a>
+          </div>
+        </div>
+        <!-- ./col -->
+      </div>
+      <!-- /.row -->
+
+      <!-- Main row -->
+      <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="datePicker">Chọn ngày:</label>
+                <input type="date" id="datePicker" class="form-control" value="{{ current_date|date:'Y-m-d' }}">
+            </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+            <!-- BAR CHART for Students Present Today by Class -->
+            <div class="card card-dark">
+                <div class="card-header">
+                    <h3 class="card-title" id="current-date">Số học sinh điểm danh trong ngày: </h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
+                        <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart">
+                        <canvas id="studentsPresentChart" style="width: 100%; height: 400;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <div class="col-md-6">
+            <!-- Pie Chart for Classes with Schedule Today -->
+            <div class="card card-dark">
+                <div class="card-header">
+                    <h3 class="card-title" id="current-date1">Lịch học hôm nay: </h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
+                        <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart">
+                        <canvas id="classScheduleChart" width="800" height="400"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-12">
+            <!-- BAR CHART for Student Overview by School -->
+            <div class="card card-dark">
+                <div class="card-header">
+                    <h3 class="card-title">Tổng quan học sinh theo trường</h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
+                        <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart">
+                        <canvas id="schoolOverviewChart" width="800" height="400"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /.container-fluid -->
+  </section>
+
+{% endblock %}
 {% block custom_js %}
-  <script>
-      $(document).ready(function(){
-        var donutData        = {
-            labels: ['Học sinh', 'Nhân viên'],
-            datasets: [
-              {
-                data:[{{total_students}}, {{total_staff}}],
-                backgroundColor : ['#00a65a', '#f39c12'],
-              }
-            ]
+
+
+<script>
+  $(document).ready(function() {
+    // Render danh sách lớp
+    var class_name_list = {{subject_list|safe}};
+    var student_present_today_list = {{ student_present_today_list|safe|escapejs }};
+    
+    // Biểu đồ "Số học sinh học trong ngày"
+    var studentsPresentChartCanvas = $('#studentsPresentChart').get(0).getContext('2d');
+    var studentsPresentChartData = {
+      labels: class_name_list,
+      datasets: [{
+        label: 'Học sinh có mặt',
+        backgroundColor: '#00a65a',
+        data: student_present_today_list
+      }]
+    };
+    var studentsPresentChartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        yAxes: [{
+          ticks: {
+            beginAtZero: true,
+            stepSize: 1
           }
-        var pieChartCanvas = $('#pieChart').get(0).getContext('2d');
-        var pieData        = donutData;
-        var pieOptions     = {
-          maintainAspectRatio : false,
-          responsive : true,
-        }
-        var pieChart = new Chart(pieChartCanvas, {
-          type: 'pie',
-          data: pieData,
-          options: pieOptions      
-        });
+        }]
+      }
+    };
+    var studentsPresentChart = new Chart(studentsPresentChartCanvas, {
+      type: 'bar',
+      data: studentsPresentChartData,
+      options: studentsPresentChartOptions
+    });
 
-        // Attendance by subject and day
-        var subject_list = {{ subject_list|safe|escape }};
-        var attendance_by_day = {{ attendance_by_day|safe|escape }}; 
-        var date_list = {{ date_list|safe|escape }}; 
+    // Biểu đồ "Lịch học hôm nay"
+    var total_classes = {{ total_classes }};
+    var classes_with_schedule_today = {{ classes_with_schedule_today }};
+    var classScheduleChartCanvas = $('#classScheduleChart').get(0).getContext('2d');
+    var classScheduleChartData = {
+      labels: ['Lớp có lịch học hôm nay', 'Lớp không có lịch học'],
+      datasets: [{
+        data: [classes_with_schedule_today, total_classes - classes_with_schedule_today],
+        backgroundColor: ['#f39c12', '#00a65a']
+      }]
+    };
+    var classScheduleChart = new Chart(classScheduleChartCanvas, {
+      type: 'pie',
+      data: classScheduleChartData
+    });
 
-        var datasets = [];
-        subject_list.forEach(function(subject, index) {
-            datasets.push({
-                label               : subject,
-                backgroundColor     : getRandomColor(), 
-                borderColor         : 'rgba(60,141,188,0.8)',
-                pointRadius         : false,
-                pointColor          : '#3b8bba',
-                pointStrokeColor    : 'rgba(60,141,188,1)',
-                pointHighlightFill  : '#fff',
-                pointHighlightStroke: 'rgba(60,141,188,1)',
-                data                : attendance_by_day[index] 
-            });
-        });
+    // Biểu đồ "Tổng quan trường"
+    var course_name_list = {{ course_name_list|safe }};
+    var student_count_list_by_school = {{ student_count_list_by_school|safe|escapejs }};
 
-        function getRandomColor() {
-            var letters = '0123456789ABCDEF';
-            var color = '#';
-            for (var i = 0; i < 6; i++) {
-                color += letters[Math.floor(Math.random() * 16)];
+    // Kiểm tra dữ liệu có phải là mảng và có giá trị hay không
+    if (Array.isArray(course_name_list) && Array.isArray(student_count_list_by_school)) {
+      var schoolOverviewChartCanvas = $('#schoolOverviewChart').get(0).getContext('2d');
+      var schoolOverviewChartData = {
+        labels: course_name_list,
+        datasets: [{
+          label: 'Số học sinh',
+          backgroundColor: '#3c8dbc',
+          data: student_count_list_by_school
+        }]
+      };
+      
+      var schoolOverviewChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          yAxes: [{
+            ticks: {
+              beginAtZero: true,
+              stepSize: 1 // Cố định bước nhảy cho trục y
             }
-            return color;
+          }]
         }
+      };
 
-        var barChartData = {
-            labels  : date_list, 
-            datasets: datasets  
-        }
-
-        var barChartCanvas = $('#barChart').get(0).getContext('2d');
-
-        var stackedBarChartOptions = {
-            responsive              : true,
-            maintainAspectRatio     : false,
-            scales: {
-                xAxes: [{
-                    stacked: true,
-                    scaleLabel: {
-                        display: true,
-                        labelString: 'Date' 
-                    }
-                }],
-                yAxes: [{
-                    stacked: true,
-                    scaleLabel: {
-                        display: true,
-                        labelString: 'Attendance Count' 
-                    }
-                }]
-            }
-        }
-
-        var barChart = new Chart(barChartCanvas, {
-            type: 'bar',
-            data: barChartData,
-            options: stackedBarChartOptions
-        });
-
-        // Pie Chart for students in each course
-        var course_name_list = {{ course_name_list|safe }};
-        var student_count_list_in_course = {{ student_count_list_in_course }};
-        var pieData2 = {
-            labels: course_name_list,
-            datasets: [
-              {
-                data: student_count_list_in_course,
-                backgroundColor : ['#cc0404', '#00a65a', '#f39c12', '#00A4BD', '#045c8f', '#894e9c', '#9e4603', '#71bfb2'],
-              }
-            ]
-        }
-        var pieChartCanvas2 = $('#pieChart2').get(0).getContext('2d');
-        var pieOptions2     = {
-            maintainAspectRatio : false,
-            responsive : true,
-        }
-        var pieChart2 = new Chart(pieChartCanvas2, {
-            type: 'pie',
-            data: pieData2,
-            options: pieOptions2      
-        });
-
-        // Bar Chart for student attendance and leave overview
-        var student_attendance_present_list = {{ student_attendance_present_list }};
-        var student_attendance_leave_list = {{ student_attendance_leave_list }};
-        var student_name_list = {{ student_name_list|safe }};
-
-        var areaChartData2 = {
-            labels  : student_name_list,
-            datasets: [
-              {
-                label               : 'Vắng mặt',
-                backgroundColor     : '#b50a04',
-                borderColor         : '#b50a04',
-                data                : student_attendance_leave_list 
-              },
-              {
-                label               : 'Có mặt',
-                backgroundColor     : '#5a615c',
-                borderColor         : '#5a615c',
-                data                : student_attendance_present_list
-              },
-            ]
-        }
-
-        var barChartCanvas2 = $('#barChart2').get(0).getContext('2d');
-        var barChartOptions2 = {
-            responsive              : true,
-            maintainAspectRatio     : false,
-            datasetFill             : false
-        }
-
-        var barChart2 = new Chart(barChartCanvas2, {
-            type: 'bar', 
-            data: areaChartData2,
-            options: barChartOptions2
-        });
+      // Khởi tạo biểu đồ
+      var schoolOverviewChart = new Chart(schoolOverviewChartCanvas, {
+        type: 'bar',
+        data: schoolOverviewChartData,
+        options: schoolOverviewChartOptions
       });
-  </script>
-{% endblock custom_js %}
+    }
+
+
+
+    // Hiển thị ngày hiện tại
+    var today = new Date();
+    var date = today.getDate() + '/' + (today.getMonth() + 1) + '/' + today.getFullYear();
+    document.getElementById('current-date').innerHTML += date;
+    document.getElementById('current-date1').innerHTML += date;
+
+    // Khi thay đổi ngày
+    $('#datePicker').on('change', function() {
+      var selectedDate = $(this).val();
+
+      if (selectedDate) {
+        var dateParts = selectedDate.split('-');
+        var formattedDate = dateParts[2] + '/' + dateParts[1] + '/' + dateParts[0];
+
+        document.getElementById('current-date').innerHTML = "Số học sinh học trong ngày: " + formattedDate;
+        document.getElementById('current-date1').innerHTML = "Lịch học hôm nay: " + formattedDate;
+      } else {
+        document.getElementById('current-date').innerHTML = "Số học sinh học trong ngày: " + date;
+        document.getElementById('current-date1').innerHTML = "Lịch học hôm nay: " + date;
+      }
+    });
+
+    // Xử lý sự kiện lọc dữ liệu theo ngày
+    $('#datePicker').on('change', function() {
+      var selectedDate = $(this).val();
+      $.ajax({
+        url: '{% url "filter_data_by_date" %}',
+        method: 'GET',
+        data: { date: selectedDate },
+        success: function(response) {
+          if (response.student_present_today_list && response.classes_with_schedule_today !== undefined && response.total_classes !== undefined) {
+            updateCharts(response.student_present_today_list, response.classes_with_schedule_today, response.total_classes);
+          } else {
+            console.error("Dữ liệu trả về không đầy đủ hoặc không hợp lệ.");
+          }
+        },
+        error: function(xhr, status, error) {
+          console.error("Lỗi khi gửi yêu cầu AJAX:", status, error);
+        }
+      });
+    });
+  });
+
+  // Cập nhật biểu đồ khi có dữ liệu mới
+  function updateCharts(studentData, classesWithSchedule, totalClasses) {
+    studentsPresentChart.data.datasets[0].data = studentData;
+    studentsPresentChart.update();
+
+    classScheduleChart.data.datasets[0].data = [classesWithSchedule, totalClasses - classesWithSchedule];
+    classScheduleChart.update();
+  }
+</script>
+
+{% endblock  %}

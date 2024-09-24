@@ -5,7 +5,7 @@ BACKUP_FILE="/backup/db_backup_$(date +%F).sqlite3"
 mkdir -p /backup
 
 # Sao lưu cơ sở dữ liệu SQLite từ Docker container
-docker cp 4322baab7e4f:/app/db.sqlite3 $BACKUP_FILE
+docker cp 45473652fe0a:/app/db.sqlite3 $BACKUP_FILE
 
 # Đặt tên repository và thông tin GitHub
 REPO_NAME="BDUCM-Attendance-System"

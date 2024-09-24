@@ -1,53 +1,78 @@
 {% extends 'main_app/base.html' %}
 {% load static %}
 {% block custom_css %}
-  <style>
-    .invalid {
-      font-style: italic;
-      font-weight: bold;
-      color: red;
+<style>
+  .invalid {
+    font-style: italic;
+    font-weight: bold;
+    color: red;
+  }
+  .valid {
+    font-style: italic;
+    font-weight: bold;
+    color: green;
+  }
+  .form-container {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    background-color: #f8f9fa;
+  }
+  .form-group {
+    margin-bottom: 15px;
+  }
+  .btn-custom {
+    background-color: #28a745;
+    color: white;
+    font-weight: bold;
+  }
+  
+ /* HTML: <div class="loader"></div> */
+ .loader-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.7); /* Mờ nền */
+  z-index: 9999; /* Hiển thị trên tất cả nội dung */
+}
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
     }
-    .valid {
-      font-style: italic;
-      font-weight: bold;
-      color: green;
-    }
-    .form-container {
-      margin-top: 20px;
-      padding: 20px;
-      border: 1px solid #dee2e6;
-      border-radius: 5px;
-      background-color: #f8f9fa;
-    }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    .btn-custom {
-      background-color: #28a745;
-      color: white;
-      font-weight: bold;
-    }
-    .progress {
-      display: none;
-      margin-top: 10px;
-      height: 25px;
-    }
-    .loading-spinner {
-      display: none;
-      width: 3rem;
-      height: 3rem;
-      border: 0.25em solid #f3f3f3;
-      border-top: 0.25em solid #3498db;
-      border-radius: 50%;
-      animation: spin 0.75s linear infinite;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  </style>
+  }
+
+    /* HTML: <div class="loader"></div> */
+  .loader {    
+    --r1: 154%;
+    --r2: 68.5%;
+    width: 60px;
+    aspect-ratio: 1;
+    border-radius: 50%; 
+    background:
+      radial-gradient(var(--r1) var(--r2) at top   ,#0000 79.5%,#269af2 80%),
+      radial-gradient(var(--r1) var(--r2) at bottom,#269af2 79.5%,#0000 80%),
+      radial-gradient(var(--r1) var(--r2) at top   ,#0000 79.5%,#269af2 80%),
+      #ccc;
+    background-size: 50.5% 220%;
+    background-position: -100% 0%,0% 0%,100% 0%;
+    background-repeat:no-repeat;
+    animation: l9 2s infinite linear;
+  }
+  @keyframes l9 {
+      33%  {background-position:    0% 33% ,100% 33% ,200% 33% }
+      66%  {background-position: -100%  66%,0%   66% ,100% 66% }
+      100% {background-position:    0% 100%,100% 100%,200% 100%}
+  }
+
+</style>
+
 {% endblock %}
 {% block page_title %}
   {{ page_title }}
@@ -65,23 +90,27 @@
           
           <!-- CSV Upload Form -->
           <div class="card-body form-section">
-            <form action="{% url 'import_csv' %}" method="POST" enctype="multipart/form-data" id="csvUploadForm" >
+            <form id="csvForm" action="{% url 'import_csv' %}" method="POST" enctype="multipart/form-data">
               {% csrf_token %}
-              <div class="form-group ">
+              <div class="form-group">
                 <label for="csvFileInput" class="font-weight-bold d-block mb-3">
-                  Chọn file CSV (.csv): 
-                  <a href="{% static 'files/Book_student (dữ liệu ở cột trường và lớp phải được tạo trước khí thêm file này để đăng ký tài khoản).csv' %}" > Tải form mẫu</a>
+                  Chọn file CSV (.csv):
+                  <a href="{% static 'files/Book_student (dữ liệu ở cột trường và lớp phải được tạo trước khí thêm file này để đăng ký tài khoản).csv' %}"> Tải form mẫu</a>
                 </label>
-                
                 <input type="file" class="form-control-file mb-3" id="csvFileInput" name="csv_file" accept=".csv" required />
-          
-                <button type="submit" class="btn btn-primary">Xác nhận</button>
+                <button type="submit" class="btn btn-primary" id="csvSubmit">Xác nhận</button>
               </div>
-            </form>
+          </form>
+          
           </div>
           
         </div>
-        <!-- general form elements -->
+
+        <div class="loader-container" id="loadingSpinner" >
+          <div class="loader" ></div>
+        </div>
+        
+        <!-- General form elements -->
         <div class="card card-dark">
           <div class="card-header">
             <h3 class="card-title">{{ page_title }}</h3>
@@ -93,55 +122,18 @@
       </div>
     </div>
   </div>
-  <div class="loading-spinner" id="loadingSpinner"></div>
 </section>
 
-  <script>
-    $('#csvUploadForm').submit(function (event) {
-      event.preventDefault(); // Chặn hành vi submit mặc định của form
-      
-      $('#loadingSpinner').show(); // Hiển thị spinner chờ
+<script>
+  // Ẩn thẻ loader khi trang được tải
+  window.onload = function() {
+   document.getElementById('loadingSpinner').style.display = 'none';
+ };
 
-      var formData = new FormData(this); // Tạo FormData từ nội dung của form
-    
-      $.ajax({
-        xhr: function() {
-          var xhr = new window.XMLHttpRequest();
-          xhr.upload.addEventListener("progress", function(evt) {
-            if (evt.lengthComputable) {
-              var percentComplete = evt.loaded / evt.total;
-              percentComplete = parseInt(percentComplete * 100);
-              $('#uploadProgress').css('width', percentComplete + '%').text(percentComplete + '%');
-              if (percentComplete === 100) {
-                $('#uploadProgress').text('Hoàn tất');
-              }
-            }
-          }, false);
-          return xhr;
-        },
-        url: $(this).attr('action'), // Đường dẫn của form được lấy từ thuộc tính 'action'
-        type: 'POST', // Phương thức POST để gửi dữ liệu
-        data: formData, // Dữ liệu được gửi là FormData
-        processData: false, // Không xử lý dữ liệu gửi (do là FormData)
-        contentType: false, // Không thiết lập kiểu nội dung (do là FormData)
-        beforeSend: function() {
-          $('.progress').show(); // Hiển thị thanh tiến trình
-        },
-        success: function (response) {
-          $('#loadingSpinner').hide(); // Ẩn spinner chờ khi hoàn tất
-          $('.progress').hide(); // Ẩn thanh tiến trình sau khi hoàn tất
-        },
-        error: function (xhr, status, error) {
-          // Xử lý khi có lỗi xảy ra
-          alert('Đã có lỗi xảy ra: ' + error);
-          $('#loadingSpinner').hide(); // Ẩn spinner chờ nếu có lỗi
-        }
-      });
-    });
-
-    $('#csvFileInput').on('change', function () {
-      $('.progress').hide(); 
-      $('#uploadProgress').css('width', '0%').text('0%');
-    });
-  </script>
+ $(document).ready(function() {
+  $('#csvSubmit').click(function (event) {
+    document.getElementById('loadingSpinner').style.display = 'block'; 
+  });
+});
+</script>
 {% endblock %}
