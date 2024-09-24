@@ -26,6 +26,7 @@ urlpatterns = [
     path("doLogin/", views.doLogin, name='user_login'),
     path("logout_user/", views.logout_user, name='user_logout'),
     path("admin/home/", hod_views.admin_home, name='admin_home'),
+    path('filter-data-by-date/', hod_views.filter_data_by_date, name='filter_data_by_date'),
     path("staff/add", hod_views.add_staff, name='add_staff'),
     path("course/add", hod_views.add_course, name='add_course'),
     path("send_student_notification/", hod_views.send_student_notification,
