@@ -83,11 +83,12 @@
   <div class="container-fluid">
     <div class="row justify-content-center">
       <div class="col-md-12"> 
+        <!-- Card for CSV Upload Form -->
         <div class="card shadow-sm">
           <div class="card-header bg-dark text-white">
             <h3 class="card-title">Thêm học sinh hàng loạt</h3>
           </div>
-          
+
           <!-- CSV Upload Form -->
           <div class="card-body form-section">
             <form id="csvForm" action="{% url 'import_csv' %}" method="POST" enctype="multipart/form-data">
@@ -95,26 +96,28 @@
               <div class="form-group">
                 <label for="csvFileInput" class="font-weight-bold d-block mb-3">
                   Chọn file CSV (.csv):
-                  <a href="{% static 'files/Book_student (dữ liệu ở cột trường và lớp phải được tạo trước khí thêm file này để đăng ký tài khoản).csv' %}"> Tải form mẫu</a>
+                  <a href="{% static 'files/Book_student (dữ liệu ở cột trường và lớp phải được tạo trước khí thêm file này để đăng ký tài khoản).csv' %}">Tải form mẫu</a>
                 </label>
                 <input type="file" class="form-control-file mb-3" id="csvFileInput" name="csv_file" accept=".csv" required />
                 <button type="submit" class="btn btn-primary" id="csvSubmit">Xác nhận</button>
               </div>
-          </form>
-          
+            </form>
           </div>
-          
         </div>
 
-        <div class="loader-container" id="loadingSpinner" >
-          <div class="loader" ></div>
+        <!-- Loader (hidden initially) -->
+        <div id="loadingSpinner" style="display:none;">
+          <!-- Your loading spinner HTML goes here, e.g. -->
+          <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
         </div>
         
         <!-- General form elements -->
         <div class="card card-dark">
           <div class="card-header">
             <h3 class="card-title">{{ page_title }}</h3>
-          </div>
+        </div>
 
           {% include 'main_app/form_template.html' with messages=messages form=form button_text='Thêm học sinh' %}
         </div>
@@ -125,15 +128,19 @@
 </section>
 
 <script>
-  // Ẩn thẻ loader khi trang được tải
+  // Hide the loader when the page is fully loaded
   window.onload = function() {
-   document.getElementById('loadingSpinner').style.display = 'none';
- };
+    document.getElementById('loadingSpinner').style.display = 'none';
+  };
 
- $(document).ready(function() {
-  $('#csvSubmit').click(function (event) {
-    document.getElementById('loadingSpinner').style.display = 'block'; 
+  // Show the loader when the form is submitted
+  $(document).ready(function() {
+    $('#csvForm').submit(function(event) {
+      document.getElementById('loadingSpinner').style.display = 'block';
+    });
   });
-});
+
+  
 </script>
+
 {% endblock %}

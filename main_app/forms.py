@@ -96,18 +96,46 @@ class CustomStudentForm(FormSettings):
         fields = ('first_name', 'last_name', 'student_id', 'gender', 'address','password')
 
 
+# class StudentForm(CustomStudentForm):
+#     course = forms.ModelChoiceField(queryset=Course.objects.all(), label="Chọn trường")
+#     session = forms.ModelChoiceField(queryset=Subject.objects.all(), label="Chọn lớp")  
+#     class Meta(CustomStudentForm.Meta):
+#         model = Student
+#         fields = CustomStudentForm.Meta.fields + ('course', 'session')
 
 class StudentForm(CustomStudentForm):
     course = forms.ModelChoiceField(queryset=Course.objects.all(), label="Chọn trường")
-    session = forms.ModelChoiceField(queryset=Subject.objects.all(), label="Chọn lớp")  
+    session = forms.ModelChoiceField(queryset=Subject.objects.none(), label="Chọn lớp")
+
+    def __init__(self, *args, **kwargs):
+        # Tách user_type từ kwargs nếu có
+        user_type = kwargs.pop('user_type', None)
+        super(StudentForm, self).__init__(*args, **kwargs)
+
+        # Cập nhật giao diện của các trường
+        for field in self.visible_fields():
+            field.field.widget.attrs['class'] = 'form-control'
+
+        # Lọc lớp học (session) theo trường (course) qua AJAX
+        if 'course' in self.data:
+            try:
+                course_id = int(self.data.get('course'))
+                self.fields['session'].queryset = Subject.objects.filter(course_id=course_id).order_by('name')
+            except (ValueError, TypeError):
+                pass  # Nếu không có giá trị hợp lệ
+        elif self.instance.pk and hasattr(self.instance, 'course'):
+            self.fields['session'].queryset = self.instance.course.subject_set.order_by('name')
+
     class Meta(CustomStudentForm.Meta):
         model = Student
         fields = CustomStudentForm.Meta.fields + ('course', 'session')
 
 
+
 class AdminForm(CustomAdminForm):
     def __init__(self, *args, **kwargs):
         super(AdminForm, self).__init__(*args, **kwargs)
+
 
     class Meta(CustomAdminForm.Meta):
         model = Admin
@@ -149,12 +177,41 @@ class SessionForm(FormSettings):
             'end_year': DateInput(attrs={'type': 'date'}),
         }
 
+# class TeachingScheduleForm(forms.ModelForm):
+#     def __init__(self, *args, **kwargs):
+#         super(TeachingScheduleForm, self).__init__(*args, **kwargs)
+#         # Thay đổi giao diện của các trường
+#         for field in self.visible_fields():
+#             field.field.widget.attrs['class'] = 'form-control'
+
+#     class Meta:
+#         model = TeachingSchedule
+#         fields = ['staff', 'school_name', 'class_name', 'schedule_date', 'start_time']
+#         widgets = {
+#             'schedule_date': forms.DateInput(attrs={'type': 'date'}),
+#             'start_time': forms.TimeInput(attrs={'type': 'time'}),
+            
+#         }
+
 class TeachingScheduleForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(TeachingScheduleForm, self).__init__(*args, **kwargs)
-        # Thay đổi giao diện của các trường
+
+        # Cập nhật giao diện của các trường
         for field in self.visible_fields():
             field.field.widget.attrs['class'] = 'form-control'
+
+        # Lọc lớp học (class_name) theo trường (school_name) qua AJAX
+        self.fields['class_name'].queryset = Subject.objects.none()
+
+        if 'school_name' in self.data:
+            try:
+                course_id = int(self.data.get('school_name'))
+                self.fields['class_name'].queryset = Subject.objects.filter(course_id=course_id).order_by('name')
+            except (ValueError, TypeError):
+                pass  # Nếu không có giá trị hợp lệ
+        elif self.instance.pk:
+            self.fields['class_name'].queryset = self.instance.school_name.subject_set.order_by('name')
 
     class Meta:
         model = TeachingSchedule
@@ -162,9 +219,8 @@ class TeachingScheduleForm(forms.ModelForm):
         widgets = {
             'schedule_date': forms.DateInput(attrs={'type': 'date'}),
             'start_time': forms.TimeInput(attrs={'type': 'time'}),
-            
         }
-        
+               
 class LeaveReportStaffForm(FormSettings):
     def __init__(self, *args, **kwargs):
         super(LeaveReportStaffForm, self).__init__(*args, **kwargs)

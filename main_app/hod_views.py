@@ -479,13 +479,17 @@ def edit_staff(request, staff_id):
 
 def edit_student(request, student_id):
     student = get_object_or_404(Student, admin_id=student_id)
+    user = student.admin  # Truy cập đối tượng CustomUser thông qua Student
+
+    # Tạo form với instance là user
     form = StudentForm(
         request.POST or None,
         request.FILES or None,
-        instance=student.admin,
+        instance=user,
         user_type="student",
     )
 
+    # Điền thông tin vào context
     context = {
         "form": form,
         "student_id": student_id,
@@ -495,46 +499,42 @@ def edit_student(request, student_id):
 
     if request.method == "POST" and form.is_valid():
         try:
-            user = (
-                student.admin
-            )  # Access the CustomUser instance through the Student instance
+            # Cập nhật thông tin người dùng
             user.student_id = form.cleaned_data.get("student_id")
             user.first_name = form.cleaned_data.get("first_name")
             user.last_name = form.cleaned_data.get("last_name")
             user.gender = form.cleaned_data.get("gender")
             user.address = form.cleaned_data.get("address")
 
-            # Update student_id if it's a Student
-            if user.user_type == "3":  # Student
+            # Cập nhật student_id nếu là Học sinh
+            if user.user_type == "3":  # Học sinh
                 user.student_id = form.cleaned_data.get("student_id")
                 user.email = None
-            else:
-                user.student_id = None
 
-            # Update password if a new one is provided
+            # Cập nhật mật khẩu nếu có mật khẩu mới
             password = form.cleaned_data.get("password")
             if password:
                 user.set_password(password)
 
-            # Save profile picture if a new one is uploaded
+            # Lưu ảnh đại diện nếu có ảnh mới được tải lên
             profile_pic = request.FILES.get("profile_pic")
             if profile_pic:
                 fs = FileSystemStorage()
                 filename = fs.save(profile_pic.name, profile_pic)
                 user.profile_pic = fs.url(filename)
 
-            # Update course and session information
+            # Cập nhật thông tin khóa học và lớp học
             student.course = form.cleaned_data.get("course")
             student.session = form.cleaned_data.get("session")
 
-            # Generate and save QR code
+            # Tạo và lưu QR code
             qr = qrcode.QRCode(
                 version=1,
                 error_correction=qrcode.constants.ERROR_CORRECT_L,
                 box_size=10,
                 border=4,
             )
-            qr.add_data(user.student_id)  # Use student_id from the user
+            qr.add_data(user.student_id)  # Sử dụng student_id từ user
             qr.make(fit=True)
 
             img = qr.make_image(fill="black", back_color="white")
@@ -542,23 +542,21 @@ def edit_student(request, student_id):
             img.save(buffer, format="PNG")
             qr_image_name = f"{user.student_id}_qr.png"
 
-            # Ensure the QR code directory exists
+            # Đảm bảo thư mục QR code tồn tại
             qr_dir = os.path.join(settings.MEDIA_ROOT, "QR")
             if not os.path.exists(qr_dir):
                 os.makedirs(qr_dir)
 
             qr_path = os.path.join(qr_dir, qr_image_name)
 
-            # Save QR code to the QR directory
+            # Lưu QR code vào thư mục QR
             with open(qr_path, "wb") as f:
                 f.write(buffer.getvalue())
 
-            # Update the user profile with the QR code path
-            user.qr_code = os.path.relpath(
-                qr_path, settings.MEDIA_ROOT
-            )  # Use relative path
+            # Cập nhật đường dẫn QR code
+            user.qr_code = os.path.relpath(qr_path, settings.MEDIA_ROOT)
 
-            # Save the user and student information
+            # Lưu thông tin người dùng và học sinh
             user.save()
             student.save()
 
@@ -570,6 +568,7 @@ def edit_student(request, student_id):
         messages.error(request, "Vui lòng điền đầy đủ thông tin vào biểu mẫu!")
 
     return render(request, "hod_template/edit_student_template.html", context)
+
 
 
 def edit_course(request, course_id):
@@ -639,6 +638,16 @@ def add_session(request):
         else:
             messages.error(request, "Điền biểu mẫu đúng cách ")
     return render(request, "hod_template/add_session_template.html", context)
+
+def load_classes(request):
+    school_id = request.GET.get('school_id')
+    classes = Subject.objects.filter(course_id=school_id).order_by('name')
+    return JsonResponse(list(classes.values('id', 'name')), safe=False)
+
+def load_classes_student(request):
+    course_id = request.GET.get('course_id')
+    subjects = Subject.objects.filter(course_id=course_id).order_by('name')
+    return JsonResponse(list(subjects.values('id', 'name')), safe=False)
 
 
 def manage_session(request):

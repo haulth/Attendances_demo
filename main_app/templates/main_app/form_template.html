@@ -4,39 +4,41 @@
 
     {% for field in form %}
       <div class="form-group field-group">
-        {{ field.errors }}
-
-        {% if field.label == 'Staff' %}
-          <label for="{{ field.id_for_label }}">Chọn giáo viên</label>
-        {% elif field.label == 'School name' %}
-          <label for="{{ field.id_for_label }}">Thêm tên trường</label>
-        {% elif field.label == 'Class name' %}
-          <label for="{{ field.id_for_label }}">Lớp</label>
-        {% elif field.label == 'Schedule date' %}
-          <label for="{{ field.id_for_label }}">Ngày</label>
-        {% elif field.label == 'Start time' %}
-          <label for="{{ field.id_for_label }}">Thời gian bắt đầu</label>
-        {% elif field.label == 'End time' %}
-          <label for="{{ field.id_for_label }}">Thời gian kết thúc</label>
-        {% elif field.label == 'Name' %}
-          <label for="{{ field.id_for_label }}">Tên</label>
-        {% elif field.label == 'Course' %}
-          <label for="{{ field.id_for_label }}">Chọn trưòng</label>
-        {% elif field.label == 'Feedback' %}
-          <label for="{{ field.id_for_label }}">Phản hồi</label>
-        {% elif field.label == 'Date' %}
-          <label for="{{ field.id_for_label }}">Chọn ngày</label>
-        {% elif field.label == 'Message' %}
-          <label for="{{ field.id_for_label }}">Lý do nghỉ phép</label>
-        {% elif field.label == 'Subject' %}
-          <label for="{{ field.id_for_label }}">Môn học</label>
-        {% elif field.label == 'Student' %}
-          <label for="{{ field.id_for_label }}">Học sinh</label>
-        {% else %}
-          {{ field.label_tag }}
-        {% endif %}
         
+        <label for="{{ field.id_for_label }}" >
+          {% if field.label == 'Staff' %}
+            Chọn giáo viên
+          {% elif field.label == 'School name' %}
+            Chọn trường
+          {% elif field.label == 'Class name' %}
+            Lớp
+          {% elif field.label == 'Schedule date' %}
+            Ngày
+          {% elif field.label == 'Start time' %}
+            Thời gian bắt đầu
+          {% elif field.label == 'End time' %}
+            Thời gian kết thúc
+          {% elif field.label == 'Name' %}
+            Tên
+          {% elif field.label == 'Course' %}
+            Chọn trường
+          {% elif field.label == 'Feedback' %}
+            Phản hồi
+          {% elif field.label == 'Date' %}
+            Chọn ngày
+          {% elif field.label == 'Message' %}
+            Lý do nghỉ phép
+          {% elif field.label == 'Subject' %}
+            Môn học
+          {% elif field.label == 'Student' %}
+            Học sinh
+          {% else %}
+            {{ field.label }}
+          {% endif %}
+        </label>
+
         {{ field }}
+        {{ field.errors }}  <!-- Hiển thị lỗi ngay bên dưới trường -->
       </div>
     {% endfor %}
   </div>
@@ -47,27 +49,48 @@
       {{ button_text|default:"Xác nhận" }}
     </button>
   </div>
-
 </form>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script>
-
-
-// Tìm kiếm các trường trong form
-function searchFields() {
-    // Lấy giá trị từ input tìm kiếm
-    var input = document.getElementById("searchInput");
-    var filter = input.value.toLowerCase();
-    var fields = document.getElementsByClassName("field-group");
-
-    // Lặp qua tất cả các trường và ẩn những trường không khớp với từ tìm kiếm
-    for (var i = 0; i < fields.length; i++) {
-        var label = fields[i].getElementsByTagName("label")[0];
-        var fieldContent = label ? label.textContent || label.innerText : "";
-        if (fieldContent.toLowerCase().indexOf(filter) > -1) {
-            fields[i].style.display = "";  // Hiển thị trường nếu có từ khóa khớp
-        } else {
-            fields[i].style.display = "none";  // Ẩn trường nếu không khớp
-        }
-    }
-}
+  $(document).ready(function () {
+    // When a school is selected, load the classes
+    $('#id_school_name').change(function () {
+        var url = "{% url 'ajax_load_classes' %}";  // URL for AJAX
+        var schoolId = $(this).val();  // Get the selected school ID
+  
+        $.ajax({
+            url: url,
+            data: {
+                'school_id': schoolId
+            },
+            success: function (data) {
+                $("#id_class_name").html('');  // Clear old classes
+                $.each(data, function (key, value) {
+                    $("#id_class_name").append('<option value="' + value.id + '">' + value.name + '</option>');
+                });
+            }
+        });
+    });
+  
+    // When a course is selected, load the classes
+    $('#id_course').change(function () {
+        var url = "{% url 'ajax_load_classes_student' %}";  // URL for AJAX
+        var courseId = $(this).val();  // Get the selected course ID
+  
+        $.ajax({
+            url: url,
+            data: {
+                'course_id': courseId
+            },
+            success: function (data) {
+                $("#id_session").html('');  // Clear old sessions
+                $.each(data, function (key, value) {
+                    $("#id_session").append('<option value="' + value.id + '">' + value.name + '</option>');
+                });
+            }
+        });
+    });
+  });
+  
 </script>

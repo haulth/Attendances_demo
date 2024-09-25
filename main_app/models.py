@@ -88,7 +88,7 @@ class Admin(models.Model):
     admin = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
 
 class Course(models.Model):
-    name = models.CharField(max_length=120, null=True)
+    name = models.CharField(max_length=120, null=True) #tên trường
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -105,7 +105,7 @@ class Staff(models.Model):
 
 
 class Subject(models.Model):
-    name = models.CharField(max_length=120)
+    name = models.CharField(max_length=120) #tên lớp
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, null=True, blank=False)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     updated_at = models.DateTimeField(auto_now=True)
