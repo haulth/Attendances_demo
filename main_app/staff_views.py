@@ -12,7 +12,7 @@ from .forms import *
 from .models import *
 from django.db.models import Count,Case, When, IntegerField
 from datetime import date
-
+from collections import defaultdict
 
 
 def staff_home(request):
@@ -25,14 +25,9 @@ def staff_home(request):
     # Lấy lịch giảng dạy của giáo viên cho ngày hôm nay
     teaching_schedules_today = TeachingSchedule.objects.filter(staff=staff, schedule_date=today)
     
-    # Lấy tổng số học sinh mà giáo viên dạy, thông qua lịch giảng dạy
-    total_students = Student.objects.filter(
-        session__in=teaching_schedules_today.values_list('class_name', flat=True)
-    ).distinct().count()  # Tránh trùng lặp học sinh nếu giáo viên dạy nhiều lớp
-    
     # Lấy tổng số lớp mà giáo viên dạy
     total_subject = teaching_schedules_today.count()
-    
+
     # Lấy danh sách học sinh điểm danh (hiện diện) và vắng mặt cho hôm nay
     students = Student.objects.filter(
         session__in=teaching_schedules_today.values_list('class_name', flat=True)
@@ -49,35 +44,27 @@ def staff_home(request):
             output_field=IntegerField()
         ))
     )
-    
-    # Tạo danh sách học sinh, số lần điểm danh và tên trường học
-    student_attendance_list = []
-    for student in students:
-        # Lấy trường học tương ứng với học sinh từ lịch giảng dạy
+
+    # Tạo dict để nhóm học sinh theo trường và tính số lượng có mặt, vắng mặt
+    school_attendance = defaultdict(lambda: {'present_count': 0, 'leave_count': 0})
+
+    for student in students.distinct():
         teaching_schedule = teaching_schedules_today.filter(class_name=student.session).first()
         school_name = teaching_schedule.school_name.name if teaching_schedule else "N/A"
         
-        student_attendance_list.append({
-            'student': student,
-            'present_count': student.present_count,
-            'leave_count': student.leave_count,
-            'school_name': school_name  # Thêm tên trường vào danh sách
-        })
+        # Đảm bảo rằng chỉ có 2 giá trị trong dict
+        school_attendance[school_name]['present_count'] += student.present_count
+        school_attendance[school_name]['leave_count'] += student.leave_count
 
     # Tạo context để truyền vào template
     context = {
         'page_title': 'Bảng quản lý - ' + str(staff.admin.last_name) + " " + str(staff.admin.first_name),
-        'total_students': total_students,
-        'total_subject': total_subject,
-        'student_attendance_list': student_attendance_list,  # Danh sách học sinh kèm số lần điểm danh và vắng mặt
-        'teaching_schedules_today': teaching_schedules_today  # Lịch dạy hôm nay
+        'school_attendance': dict(school_attendance),  # Chuyển defaultdict về dict
+        'teaching_schedules_today': teaching_schedules_today,  # Lịch dạy hôm nay
+        'total_subject': total_subject
     }
     
-    print(context)  # In context để kiểm tra
-    
     return render(request, 'staff_template/home_content.html', context)
-
-
 
 
 def staff_take_attendance(request):
@@ -97,7 +84,6 @@ def staff_take_attendance(request):
     }
 
     return render(request, 'staff_template/staff_take_attendance.html', context)
-
 
 
 def get_subjects_by_session_staff(request):
