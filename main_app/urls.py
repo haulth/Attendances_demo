@@ -73,6 +73,7 @@ urlpatterns = [
          hod_views.delete_session, name='delete_session'),
     path("student/delete/<int:student_id>",
          hod_views.delete_student, name='delete_student'),
+    path("delete_students/", hod_views.delete_students, name='delete_students'),
     path("student/edit/<int:student_id>",
          hod_views.edit_student, name='edit_student'),
     path("course/edit/<int:course_id>",

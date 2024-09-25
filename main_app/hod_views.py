@@ -1069,10 +1069,71 @@ def delete_staff(request, staff_id):
 
 from django.core.files.storage import default_storage
 # Xóa học sinh
+# def delete_student(request, student_id):
+#     try:
+#         student = get_object_or_404(CustomUser, id=student_id)
+        
+#         print("xoa học sinh:", student)
+#         # Xóa ảnh đại diện nếu có
+#         if student.profile_pic:
+#             profile_pic_name = student.profile_pic.name  
+#             print("Đường dẫn ảnh đại diện:", profile_pic_name)
+
+#             # Loại bỏ '/media/' khỏi đường dẫn trước khi kiểm tra và xóa
+#             if profile_pic_name.startswith('/media/'):
+#                 profile_pic_name = profile_pic_name[7:]  # Bỏ cả dấu '/'
+
+#             full_profile_pic_path = os.path.join(settings.MEDIA_ROOT, profile_pic_name)
+#             print("Đường dẫn đầy đủ ảnh đại diện:", full_profile_pic_path)
+
+#             # Xóa ảnh đại diện nếu tệp tồn tại
+#             if os.path.exists(full_profile_pic_path):
+#                 default_storage.delete(full_profile_pic_path)
+                
+#         # Xóa mã QR nếu có
+#         if student.qr_code:
+#             qr_code_path = os.path.join(settings.MEDIA_ROOT, student.qr_code.name)
+#             if os.path.exists(qr_code_path):
+#                 default_storage.delete(qr_code_path)
+
+#         # Xóa học sinh
+#         student.delete()
+#         messages.success(request, "Xóa học sinh thành công!")
+#     except Exception as e:
+#         messages.error(request, f"Đã xảy ra lỗi khi xóa học sinh: {str(e)}")
+
+#     return redirect(reverse("manage_student"))
+@csrf_exempt
+def delete_students(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        ids = data.get('ids', [])
+        
+        success_messages = []
+        error_messages = []
+
+        for student_id in ids:
+            try:
+                # Gọi hàm xóa học sinh hiện có
+                delete_student(request, student_id)
+                success_messages.append(f"Xóa học sinh ID {student_id} thành công!")
+            except Exception as e:
+                error_messages.append(f"Đã xảy ra lỗi khi xóa học sinh ID {student_id}: {str(e)}")
+        
+        # Hiển thị thông báo sau khi hoàn tất tất cả các thao tác xóa
+        if success_messages:
+            messages.success(request, " | ".join(success_messages))
+        if error_messages:
+            messages.error(request, " | ".join(error_messages))
+        
+        return JsonResponse({'success': True})
+
+    return JsonResponse({'success': False}, status=400)
+
 def delete_student(request, student_id):
     try:
         student = get_object_or_404(CustomUser, id=student_id)
-        
+
         print("xoa học sinh:", student)
         # Xóa ảnh đại diện nếu có
         if student.profile_pic:
@@ -1098,13 +1159,10 @@ def delete_student(request, student_id):
 
         # Xóa học sinh
         student.delete()
-        messages.success(request, "Xóa học sinh thành công!")
     except Exception as e:
-        messages.error(request, f"Đã xảy ra lỗi khi xóa học sinh: {str(e)}")
+        messages.error(request, f"Đã xảy ra lỗi khi xóa học sinh ID {student_id}: {str(e)}")
 
     return redirect(reverse("manage_student"))
-
-
 # xóa khóa học
 def delete_course(request, course_id):
     course = get_object_or_404(Course, id=course_id)

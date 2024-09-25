@@ -82,36 +82,38 @@
 
 {% block custom_js %}
 
+<script>
 
-
-<<script>
     $(document).ready(function() {
+        
         $('#session_id').change(function() {
             var session_id = $(this).val(); // Lấy ID trường đã chọn
-            console.log('Giá trị đã chọn: ', session_id);
+            console.log('gia trị da chọn: ', session_id)
 
+            
             if (session_id == "") {
                 $('#subject_id').html('<option value="">----</option>');
                 return;
             }
 
-            // Gửi Ajax để lấy danh sách môn học theo trường
+            // Gửi Ajax để lấy danh sách lớp theo trường
             $.ajax({
-                url: "{% url 'get_subjects_by_session_staff' %}",
+                url: "{% url 'get_subjects_by_session_staff' %}", 
                 type: "GET",
                 data: {
                     session_id: session_id
                 },
                 success: function(response) {
+                    
                     var subjects = response.subjects;
                     var html = '<option value="">----</option>';
                     for (var i = 0; i < subjects.length; i++) {
                         html += '<option value="' + subjects[i].id + '">' + subjects[i].name + '</option>';
                     }
-                    $('#subject_id').html(html); // Cập nhật dropdown của môn học
+                    $('#subject_id').html(html); // Cập nhật dropdown của lớp học
                 },
                 error: function() {
-                    alert("Lỗi khi lấy danh sách môn học");
+                    alert("Lỗi khi lấy danh sách lớp học");
                 }
             });
         });
@@ -128,77 +130,60 @@
             return;
         }
 
-        const video = document.createElement('video');
-        const qrReader = document.getElementById('qr-reader');
-        const canvasElement = document.createElement('canvas');
-        const canvas = canvasElement.getContext('2d');
+        function onScanSuccess(decodedText, decodedResult) {
+            $.ajax({
+                url: "{% url 'qr_code_scanner' %}",
+                type: "POST",
+                data: {
+                    subject_id: subject_id,
+                    session_id: session_id,
+                    date: date,
+                    qr_code_data: decodedText,
+                    csrfmiddlewaretoken: document.querySelector("[name=csrfmiddlewaretoken]").value
+                },
+                success: function(response) {
+                    var alertClass = response.status === "success" ? "alert-success" : "alert-danger";
+                    $("#qr-reader-results").html(
+                        "<div class='alert " + alertClass + "' role='alert'>" + response.message + "</div>"
+                    );
+                    
+                    if (response.status === "success") {
+                        var studentRow = "<tr><td>" + ($("#attendance-list tr").length + 1) + "</td><td>" + response.student_id + "</td><td>" + response.student_name + "</td><td>" + response.timestamp + "</td></tr>";
+                        $("#attendance-list").append(studentRow);
+                    }
 
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-            .then(function(stream) {
-                video.srcObject = stream;
-                video.setAttribute("playsinline", true);
-                video.play();
-                requestAnimationFrame(scanQRCode);
-            });
-
-        function scanQRCode() {
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                canvasElement.height = video.videoHeight;
-                canvasElement.width = video.videoWidth;
-                canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
-                const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height);
-                if (code) {
-                    console.log(`Đã quét mã QR: ${code.data}`);
-                    video.srcObject.getTracks().forEach(track => track.stop());
-
-                    $.ajax({
-                        url: "{% url 'qr_code_scanner' %}",
-                        type: "POST",
-                        data: {
-                            subject_id: subject_id,
-                            session_id: session_id,
-                            date: date,
-                            qr_code_data: code.data,
-                            csrfmiddlewaretoken: document.querySelector("[name=csrfmiddlewaretoken]").value
-                        },
-                        success: function(response) {
-                            var alertClass = response.status === "success" ? "alert-success" : "alert-danger";
-                            $("#qr-reader-results").html(
-                                "<div class='alert " + alertClass + "' role='alert'>" + response.message + "</div>"
-                            );
-
-                            if (response.status === "success") {
-                                var studentRow = "<tr><td>" + ($("#attendance-list tr").length + 1) + "</td><td>" + response.student_id + "</td><td>" + response.student_name + "</td><td>" + response.timestamp + "</td></tr>";
-                                $("#attendance-list").append(studentRow);
-                            }
-
-                            setTimeout(function() {
-                                $("#qr-reader-results").html("");
-                            }, 3000);
-                        },
-                        error: function() {
-                            $("#qr-reader-results").html("<div class='alert alert-danger' role='alert'>Lỗi khi quét mã QR</div>");
-                            setTimeout(function() {
-                                $("#qr-reader-results").html("");
-                            }, 3000);
-                        }
-                    });
-                } else {
-                    requestAnimationFrame(scanQRCode);
+                    setTimeout(function() {
+                        $("#qr-reader-results").html("");
+                    }, 3000);
+                },
+                error: function() {
+                    $("#qr-reader-results").html("<div class='alert alert-danger' role='alert'>Lỗi khi quét mã QR</div>");
+                    setTimeout(function() {
+                        $("#qr-reader-results").html("");
+                    }, 3000);
                 }
-            } else {
-                requestAnimationFrame(scanQRCode);
-            }
+            });
         }
+
+        function onScanFailure(error) {
+            console.warn(`Quét thất bại: ${error}`);
+        }
+
+        let html5QrCode = new Html5Qrcode("qr-reader");
+        html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            onScanSuccess,
+            onScanFailure
+        ).catch(err => {
+            console.log(`Không thể khởi động QR code scanner: ${err}`);
+        });
     });
 
-    // Cập nhật giá trị ngày hiện tại khi trang được load
     document.addEventListener("DOMContentLoaded", function() {
         var today = new Date().toISOString().split('T')[0];
         document.getElementById('date').value = today;
     });
-
 </script>
 
 {% endblock custom_js %} 
