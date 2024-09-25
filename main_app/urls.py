@@ -79,10 +79,13 @@ urlpatterns = [
          hod_views.edit_course, name='edit_course'),
     path("subject/edit/<int:subject_id>",
          hod_views.edit_subject, name='edit_subject'),
+    path('ajax/load-classes/', hod_views.load_classes, name='ajax_load_classes'),
+    path('ajax/load-classes-student/', hod_views.load_classes_student, name='ajax_load_classes_student'),
     ##dăng ký tài khoản qua file xlsx
     path('import_csv/', hod_views.import_csv, name='import_csv'),
     #xuất dữ liệu ra file xlsx
     path('export_attendance/', hod_views.export_attendance, name='export_attendance'),
+    
     #phân trang
     path('manage_students/', hod_views.manage_students, name='manage_students'),
     path('complete_teaching_schedule/', staff_views.complete_teaching_schedule, name='complete_teaching_schedule'),

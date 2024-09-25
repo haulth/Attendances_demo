@@ -66,7 +66,7 @@
           <div class="small-box bg-yellow">
             <div class="inner">
               <h3>{{ total_teaching }}</h3>
-              <p>Tông số lịch dạy</p>
+              <p>Tổng số lịch dạy</p>
             </div>
             <div class="icon">
               <i class="nav-icon fas fa-book"></i>
@@ -153,53 +153,70 @@
 
 
 <script>
+  var studentsPresentChart;
+  var classScheduleChart;
+
   $(document).ready(function() {
-    // Render danh sách lớp
-    var class_name_list = {{subject_list|safe}};
-    var student_present_today_list = {{ student_present_today_list|safe|escapejs }};
-    
-    // Biểu đồ "Số học sinh học trong ngày"
+
+    //biểu đồ số học sinh học trong ngày
     var studentsPresentChartCanvas = $('#studentsPresentChart').get(0).getContext('2d');
-    var studentsPresentChartData = {
-      labels: class_name_list,
-      datasets: [{
-        label: 'Học sinh có mặt',
-        backgroundColor: '#00a65a',
-        data: student_present_today_list
-      }]
-    };
-    var studentsPresentChartOptions = {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        yAxes: [{
-          ticks: {
-            beginAtZero: true,
-            stepSize: 1
-          }
-        }]
-      }
-    };
-    var studentsPresentChart = new Chart(studentsPresentChartCanvas, {
+    studentsPresentChart = new Chart(studentsPresentChartCanvas, {
       type: 'bar',
-      data: studentsPresentChartData,
-      options: studentsPresentChartOptions
+      data: {
+        labels: {{ subject_list|safe }},
+        datasets: [{
+          label: 'Học sinh có mặt',
+          backgroundColor: '#00a65a',
+          data: {{ student_present_today_list|safe|escapejs }}  
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          yAxes: [{
+            ticks: {
+              beginAtZero: true,
+              stepSize: 1
+            }
+          }]
+        }
+      }
     });
 
-    // Biểu đồ "Lịch học hôm nay"
-    var total_classes = {{ total_classes }};
-    var classes_with_schedule_today = {{ classes_with_schedule_today }};
+    // biểu đồ lịch học hôm nay
     var classScheduleChartCanvas = $('#classScheduleChart').get(0).getContext('2d');
-    var classScheduleChartData = {
-      labels: ['Lớp có lịch học hôm nay', 'Lớp không có lịch học'],
-      datasets: [{
-        data: [classes_with_schedule_today, total_classes - classes_with_schedule_today],
-        backgroundColor: ['#f39c12', '#00a65a']
-      }]
-    };
-    var classScheduleChart = new Chart(classScheduleChartCanvas, {
+    classScheduleChart = new Chart(classScheduleChartCanvas, {
       type: 'pie',
-      data: classScheduleChartData
+      data: {
+        labels: ['Lớp có lịch học hôm nay', 'Lớp không có lịch học'],
+        datasets: [{
+          data: [{{ classes_with_schedule_today }}, {{ total_classes }} - {{ classes_with_schedule_today }}],
+          backgroundColor: ['#f39c12', '#00a65a']
+        }]
+      }
+    });
+
+    // cập nhạt ngày cho biểu đồ
+    $('#datePicker').on('change', function() {
+      var selectedDate = $(this).val();
+
+      $.ajax({
+        url: '{% url "filter_data_by_date" %}',
+        method: 'GET',
+        data: { date: selectedDate },
+        success: function(response) {
+          console.log(response);  
+          if (response.student_present_today_list && response.classes_with_schedule_today !== undefined && response.total_classes !== undefined) {
+            updateCharts(response.student_present_today_list, response.classes_with_schedule_today, response.total_classes);
+          } else {
+            console.error("Dữ liệu trả về không đầy đủ hoặc không hợp lệ.");
+          }
+        },
+        error: function(xhr, status, error) {
+          console.error("Lỗi khi gửi yêu cầu AJAX:", status, error);
+        }
+      });
     });
 
     // Biểu đồ "Tổng quan trường"
@@ -239,15 +256,13 @@
       });
     }
 
-
-
     // Hiển thị ngày hiện tại
     var today = new Date();
     var date = today.getDate() + '/' + (today.getMonth() + 1) + '/' + today.getFullYear();
     document.getElementById('current-date').innerHTML += date;
     document.getElementById('current-date1').innerHTML += date;
 
-    // Khi thay đổi ngày
+    // Xử lý hiển thị ngày cho ngày đã chọn
     $('#datePicker').on('change', function() {
       var selectedDate = $(this).val();
 
@@ -262,36 +277,17 @@
         document.getElementById('current-date1').innerHTML = "Lịch học hôm nay: " + date;
       }
     });
-
-    // Xử lý sự kiện lọc dữ liệu theo ngày
-    $('#datePicker').on('change', function() {
-      var selectedDate = $(this).val();
-      $.ajax({
-        url: '{% url "filter_data_by_date" %}',
-        method: 'GET',
-        data: { date: selectedDate },
-        success: function(response) {
-          if (response.student_present_today_list && response.classes_with_schedule_today !== undefined && response.total_classes !== undefined) {
-            updateCharts(response.student_present_today_list, response.classes_with_schedule_today, response.total_classes);
-          } else {
-            console.error("Dữ liệu trả về không đầy đủ hoặc không hợp lệ.");
-          }
-        },
-        error: function(xhr, status, error) {
-          console.error("Lỗi khi gửi yêu cầu AJAX:", status, error);
-        }
-      });
-    });
   });
 
-  // Cập nhật biểu đồ khi có dữ liệu mới
+  // Chức năng cập nhật biểu đồ khi nhận dữ liệu mới
   function updateCharts(studentData, classesWithSchedule, totalClasses) {
+    // cập nhật học sinh có mặt
     studentsPresentChart.data.datasets[0].data = studentData;
-    studentsPresentChart.update();
+    studentsPresentChart.update();  // Trigger the update
 
+    // cập nhật lịch học hôm nay
     classScheduleChart.data.datasets[0].data = [classesWithSchedule, totalClasses - classesWithSchedule];
-    classScheduleChart.update();
+    classScheduleChart.update();  // Trigger the update
   }
 </script>
-
 {% endblock  %}
