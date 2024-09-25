@@ -1,6 +1,6 @@
 import json, pytz
 import logging
-
+import datetime
 from django.contrib import messages
 from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse, JsonResponse
@@ -10,37 +10,74 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from .forms import *
 from .models import *
-
+from django.db.models import Count,Case, When, IntegerField
 from datetime import date
 
 
 
-
-
 def staff_home(request):
+    # Lấy thông tin giáo viên hiện tại
     staff = get_object_or_404(Staff, admin=request.user)
-    total_students = Student.objects.filter(course=staff.course).count()
-    total_leave = LeaveReportStaff.objects.filter(staff=staff).count()
-    subjects = Subject.objects.filter(staff=staff)
-    total_subject = subjects.count()
-    attendance_list = Attendance.objects.filter(subject__in=subjects)
-    total_attendance = attendance_list.count()
-    attendance_list = []
-    subject_list = []
-    for subject in subjects:
-        attendance_count = Attendance.objects.filter(subject=subject).count()
-        subject_list.append(subject.name)
-        attendance_list.append(attendance_count)
+    
+    # Lấy ngày hiện tại
+    today = timezone.now().date()
+    
+    # Lấy lịch giảng dạy của giáo viên cho ngày hôm nay
+    teaching_schedules_today = TeachingSchedule.objects.filter(staff=staff, schedule_date=today)
+    
+    # Lấy tổng số học sinh mà giáo viên dạy, thông qua lịch giảng dạy
+    total_students = Student.objects.filter(
+        session__in=teaching_schedules_today.values_list('class_name', flat=True)
+    ).distinct().count()  # Tránh trùng lặp học sinh nếu giáo viên dạy nhiều lớp
+    
+    # Lấy tổng số lớp mà giáo viên dạy
+    total_subject = teaching_schedules_today.count()
+    
+    # Lấy danh sách học sinh điểm danh (hiện diện) và vắng mặt cho hôm nay
+    students = Student.objects.filter(
+        session__in=teaching_schedules_today.values_list('class_name', flat=True)
+    ).annotate(
+        present_count=Count(Case(
+            When(attendancereport__status=True, attendancereport__attendance__date=today, then=1),
+            output_field=IntegerField()
+        )),
+        leave_count=Count(Case(
+            When(attendancereport__status=False, attendancereport__attendance__date=today, then=1),
+            output_field=IntegerField()
+        )) + Count(Case(
+            When(leavereportstudent__status=1, leavereportstudent__date=today, then=1),
+            output_field=IntegerField()
+        ))
+    )
+    
+    # Tạo danh sách học sinh, số lần điểm danh và tên trường học
+    student_attendance_list = []
+    for student in students:
+        # Lấy trường học tương ứng với học sinh từ lịch giảng dạy
+        teaching_schedule = teaching_schedules_today.filter(class_name=student.session).first()
+        school_name = teaching_schedule.school_name.name if teaching_schedule else "N/A"
+        
+        student_attendance_list.append({
+            'student': student,
+            'present_count': student.present_count,
+            'leave_count': student.leave_count,
+            'school_name': school_name  # Thêm tên trường vào danh sách
+        })
+
+    # Tạo context để truyền vào template
     context = {
-        'page_title': 'Bảng quản lý - ' + str(staff.admin.last_name) +" " + str(staff.admin.first_name) ,
+        'page_title': 'Bảng quản lý - ' + str(staff.admin.last_name) + " " + str(staff.admin.first_name),
         'total_students': total_students,
-        'total_attendance': total_attendance,
-        'total_leave': total_leave,
         'total_subject': total_subject,
-        'subject_list': subject_list,
-        'attendance_list': attendance_list
+        'student_attendance_list': student_attendance_list,  # Danh sách học sinh kèm số lần điểm danh và vắng mặt
+        'teaching_schedules_today': teaching_schedules_today  # Lịch dạy hôm nay
     }
+    
+    print(context)  # In context để kiểm tra
+    
     return render(request, 'staff_template/home_content.html', context)
+
+
 
 
 def staff_take_attendance(request):
