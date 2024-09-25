@@ -22,6 +22,45 @@
     .form-section {
       padding: 20px;
     }
+
+     /* HTML: <div class="loader"></div> */
+  .loader-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.7); /* Blurred overlay */
+    z-index: 9999;
+  }
+
+  /* Loader animation */
+  .loader {    
+    --r1: 154%;
+    --r2: 68.5%;
+    width: 60px;
+    aspect-ratio: 1;
+    border-radius: 50%; 
+    background:
+      radial-gradient(var(--r1) var(--r2) at top   ,#0000 79.5%,#269af2 80%),
+      radial-gradient(var(--r1) var(--r2) at bottom,#269af2 79.5%,#0000 80%),
+      radial-gradient(var(--r1) var(--r2) at top   ,#0000 79.5%,#269af2 80%),
+      #ccc;
+    background-size: 50.5% 220%;
+    background-position: -100% 0%,0% 0%,100% 0%;
+    background-repeat: no-repeat;
+    animation: l9 2s infinite linear;
+  }
+
+  /* Keyframe animation for loader */
+  @keyframes l9 {
+    33%  {background-position:    0% 33% ,100% 33% ,200% 33% }
+    66%  {background-position: -100%  66%,0%   66% ,100% 66% }
+    100% {background-position:    0% 100%,100% 100%,200% 100%}
+  }
   </style>
 {% endblock custom_css %}
 
@@ -37,7 +76,7 @@
           
           <!-- CSV Upload Form -->
           <div class="card-body form-section">
-            <form method="post" enctype="multipart/form-data" action="{% url 'add_staff_csv' %}">
+            <form id="csvForm" method="post" enctype="multipart/form-data" action="{% url 'add_staff_csv' %}">
               {% csrf_token %}
               <div class="form-group">
                 <label for="file">Chọn file Excel (.xlsx):<a href="{% static 'files/Book_staff.xlsx' %}" > Tải form mẫu</a></label>
@@ -46,6 +85,11 @@
               <button type="submit" class="btn btn-primary">Xác nhận</button>
             </form>
           </div>
+        </div>
+        
+        <!-- Loader-->
+        <div id="loadingSpinner" class="loader-container">
+          <div class="loader"></div>
         </div>
         
         <!-- General form elements -->
@@ -65,6 +109,19 @@
 
 {% block custom_js %}
 <script>
+
+    window.onload = function() {
+      document.getElementById('loadingSpinner').style.display = 'none';
+    };
+  
+    // hiển thị hiệu ứng loading
+    $(document).ready(function() {
+      $('#csvForm').submit(function(event) {
+        document.getElementById('loadingSpinner').style.display = 'flex';
+      });
+    });
+  
+
   function validateEmail(email) {
     const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     return re.test(String(email).toLowerCase());
