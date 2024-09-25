@@ -1,4 +1,4 @@
-<form role="form" method="POST" enctype="multipart/form-data">
+<form id="csvForm" role="form" method="POST" enctype="multipart/form-data" >
   {% csrf_token %}
   <div class="card-body">
 
@@ -38,10 +38,11 @@
         </label>
 
         {{ field }}
-        {{ field.errors }}  <!-- Hiển thị lỗi ngay bên dưới trường -->
+        {{ field.errors }}  
       </div>
     {% endfor %}
   </div>
+
   <!-- /.card-body -->
 
   <div class="card-footer">
@@ -53,6 +54,7 @@
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script>
+
   $(document).ready(function () {
     // When a school is selected, load the classes
     $('#id_school_name').change(function () {
