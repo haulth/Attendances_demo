@@ -4,7 +4,9 @@
   {{ page_title }}
 {% endblock %}
 {% block content %}
+<meta name="viewport" content="width=device-width, initial-scale=1">
   <section class="content">
+
     <div class="container-fluid">
       <!-- Card lớn bao quanh 2 thẻ -->
       <div class="card shadow-lg p-3 mb-5 bg-white rounded">
@@ -15,7 +17,14 @@
               <div class="small-box bg-info shadow-sm p-3 mb-5 bg-blue rounded">
                 <div class="inner">
                   <h3>Tổng số học sinh</h3>
-                  <h4><i>{{ total_students }}</i></h4>
+                  <!-- Vòng lặp qua từng lớp và hiển thị số lượng học sinh -->
+                  <ul style="list-style-type:none; padding: 0;">
+                    {% for class_name, student_count in class_students_data.items %}
+                      <li style="padding: 8px 0; border-bottom: 1px solid #ddd;">
+                        <strong>Lớp {{ class_name }}</strong>: <i>{{ student_count }}</i> học sinh
+                      </li>
+                    {% endfor %}
+                  </ul>
                 </div>
                 <div class="icon">
                   <i class="nav-icon fas fa-user-graduate"></i>
@@ -27,9 +36,16 @@
             <div class="col-lg-6 col-md-6">
               <!-- small box -->
               <div class="small-box bg-yellow shadow-sm p-3 mb-5 bg-yellow rounded">
-                <div class="inner">
-                  <h3>Tổng số lớp học</h3>
-                  <h4><i>{{ total_subject }}</i></h4>
+                <div class="inner text-center">
+                  <h3 class="text-truncate">Tổng số lớp học: <i>{{ total_subject }}</i></h3>
+                  <!-- Hiển thị danh sách các lớp học -->
+                  <ul style="list-style-type:none; padding: 0; text-align: left;">
+                    {% for class_name in class_names %}
+                      <li style="padding: 5px 0; border-bottom: 1px solid #ddd;">
+                        <strong> Lớp {{ class_name }}</strong>
+                      </li>
+                    {% endfor %}
+                  </ul>
                 </div>
                 <div class="icon">
                   <i class="nav-icon fas fa-school"></i>
@@ -41,7 +57,7 @@
               <div class="small-box shadow-sm p-3 mb-5 bg-info rounded">
                 <div class="inner">
                   <!-- Cập nhật tiêu đề với CSS -->
-                  <h3 class="text-truncate" id="current-date">Điểm danh hôm nay: </h3>
+                  <h3 class="text-truncate" id="current-date" class="text-truncate">Điểm danh ngày: </h3>
                   <ul class="list-group">
                     {% for school_name, attendance in school_attendance.items %}
                       <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -56,13 +72,12 @@
                 </div>
               </div>
             </div>
-            
 
-            <div class="col-lg-4 col-md-6">
+            <div class="col-lg-6 col-md-6">
               <!-- small box -->
-              <div class="small-box bg-success shadow-sm p-3 mb-5 bg-green rounded">
+              <div class="small-box bg-success shadow-sm p-3 mb- bg-green rounded">
                 <div class="inner">
-                  <h3 id="current-date1" class="text-truncate">Lịch dạy hôm nay: </h3>
+                  <h3 id="current-date1" class="text-truncate">Lịch dạy ngày: </h3>
                   <ul class="list-group" style="color: black;">
                     {% for schedule in teaching_schedules_today %}
                       <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -70,7 +85,7 @@
                           <strong>{{ schedule.class_name.name }}</strong> <br />
                           <small>{{ schedule.school_name.name }}</small>
                         </div>
-                        <span class="badge badge-primary badge-pill">Thời gian: {{ schedule.start_time|time:"G" }}h:{{ schedule.start_time|time:"i" }}p</span>
+                        <span class="badge badge-primary badge-pill">Thời gian: {{ schedule.start_time|time:'G' }}h:{{ schedule.start_time|time:'i' }}p</span>
                       </li>
                     {% endfor %}
                   </ul>
@@ -94,5 +109,10 @@
     var date = today.getDate() + '/' + (today.getMonth() + 1) + '/' + today.getFullYear()
     document.getElementById('current-date').innerHTML += date
     document.getElementById('current-date1').innerHTML += date
+
+    document.addEventListener("DOMContentLoaded", function() {
+      var modal = new bootstrap.Modal(document.getElementById('notificationModal'));
+      modal.show();
+  });
   </script>
 {% endblock %}

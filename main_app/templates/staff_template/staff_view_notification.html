@@ -4,77 +4,171 @@
 
 {% block content %}
 
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+    @media only screen and (max-width: 600px) {
+        video {
+            width: 100%;
+            height: auto;
+            max-width: 100%; /* Ensure the video adjusts to 100% of its container */
+        }
+    
+        .table-responsive {
+            max-height: 200px;
+        }
+    
+        .content {
+            padding: 10px;
+        }
+    }
+    
+    .qr-frame {
+        position: relative;
+        width: 100%;
+        max-width: 500px; /* Set max width of the frame */
+        height: 300px; /* Set a fixed height for the frame */
+        margin: 0 auto;
+    }
+    
+    #qr-reader {
+        width: 100%;
+        height: 100%; /* Ensure the video takes up the entire height of the frame */
+        object-fit: cover; /* Scale the video to cover the frame without distortion */
+    }
+    
+    .qr-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border: 3px solid transparent;
+        pointer-events: none;
+    }
+    
+    .qr-corner {
+        position: absolute;
+        width: 30px;
+        height: 30px;
+        border: 3px solid limegreen;
+    }
+    
+    .qr-corner.top-left {
+        top: 0;
+        left: 0;
+        border-right: none;
+        border-bottom: none;
+    }
+    
+    .qr-corner.top-right {
+        top: 0;
+        right: 0;
+        border-left: none;
+        border-bottom: none;
+    }
+    
+    .qr-corner.bottom-left {
+        bottom: 0;
+        left: 0;
+        border-right: none;
+        border-top: none;
+    }
+    
+    .qr-corner.bottom-right {
+        bottom: 0;
+        right: 0;
+        border-left: none;
+        border-top: none;
+    }
+    
+
+</style>
+
 <section class="content">
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.3.1/dist/jsQR.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+   
 
-    <!-- Sau đó tải Summernote -->
-    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote.min.js"></script>
+    <div class="container" style="max-width: 200%;">
+        <div class="card shadow-lg" style="transform: perspective(1000px) rotateX(1deg); ">
+            <div class="card-body" style="width: 100%;">
+                <section class="content">
+                    <form id="attendance-form">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-3" id="shool">
+                                <div class="form-group">
+                                    <label for="session_id">Chọn trường</label>
+                                    <select name="session_id" id="session_id" class="form-control">
+                                        {% for session in sessions %}
+                                        <option value="{{ session.id }}">{{ session }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
 
-    <!-- Tải CSS của Summernote -->
-    <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote.min.css" rel="stylesheet">
+                            <div class="col-md-3" id="subject">
+                                <div class="form-group">
+                                    <label for="subject_id">Chọn lớp</label>
+                                    <select name="subject_id" id="subject_id" class="form-control">
+                                        {% for subject in subjects %}
+                                        <option value="{{ subject.id }}">{{ subject.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <input style="display: none;" type="date" name="date" id="date" class="form-control" />
+                            <div class="col-md-2" style="margin-top: 8px;" id="btn_qr">
+                                <button type="button" id="scan-qr-btn" class="btn btn-primary btn-block mt-4">Quét mã QR</button>
+                            </div>
+                        </div>
+                    </form>
 
-    <form id="attendance-form">
-        {% csrf_token %}
-        <div class="row">
-            
-            <div class="col-md-3">
-                <div class="form-group">
-                    <label for="session_id">Chọn trường</label>
-                    <select name="session_id" id="session_id" class="form-control">
-                        {% for session in sessions %}
-                        <option value="{{ session.id }}">{{ session }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+                    <div class="row mt-4">
+                        <!-- Camera QR -->
+                        {% comment %} <div class="col-md-4 col-sm-6 col-12">
+                            <div class="qr-frame">
+                                <video id="qr-reader" style="height: 200px; width: 100%; max-width: 500px;"></video>
+                            </div>
+                            <div id="qr-reader-results" class="mt-3"></div>
+                        </div> {% endcomment %}
+
+                        <!-- Camera QR -->
+                        <div class="col-md-4 col-sm-6 col-12">
+                            <div class="qr-frame">
+                                <video id="qr-reader"></video>
+                                <div class="qr-overlay">
+                                    <div class="qr-corner top-left"></div>
+                                    <div class="qr-corner top-right"></div>
+                                    <div class="qr-corner bottom-left"></div>
+                                    <div class="qr-corner bottom-right"></div>
+                                </div>
+                            </div>
+                           
+                        </div>
+                        <div id="qr-reader-results" class="mt-3"></div>
+                        
+                           
+                        <!-- Danh sách học sinh đã điểm danh -->
+                        <div class="col-md-6">
+                            <h4>Danh sách học sinh đã điểm danh</h4>
+                            <div class="table-responsive" style="max-height: 300px; overflow-y: auto; width: 100%;"> <!-- Tăng chiều ngang -->
+                                <table class="table table-striped table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Mã Học Sinh</th>
+                                            <th>Họ Tên</th>
+                                            <th>Thời gian điểm danh</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="attendance-list">
+                                        <!-- Hiển thị tối đa 5 học sinh -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
-
-            <div class="col-md-3">
-                <div class="form-group">
-                    <label for="subject_id">Chọn lớp</label>
-                    <select name="subject_id" id="subject_id" class="form-control">
-                        {% for subject in subjects %}
-                        <option value="{{ subject.id }}">{{ subject.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="form-group">
-                    <label for="date">Ngày</label>
-                    <input type="date" name="date" id="date" class="form-control" />
-                </div>
-            </div>
-            <div class="col-md-2" style="margin-top: 8px;">
-                <button type="button" id="scan-qr-btn" class="btn btn-primary btn-block mt-4">Quét mã QR</button>
-            </div>
-        </div>
-    </form>
-
-    <div class="row mt-4">
-        <div class="col-md-4">
-            <div id="qr-reader" style="width: 100%; max-width: 400px; height: auto; border: 2px solid #000; padding: 10px;">
-                
-            </div>
-            <div id="qr-reader-results" class="mt-3"></div>
-        </div>
-
-        <div class="col-md-6">
-            <h4>Danh sách học sinh đã điểm danh</h4>
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Mã Học Sinh</th>
-                        <th>Họ Tên</th>
-                        <th>Thời gian điểm danh</th>
-                    </tr>
-                </thead>
-                <tbody id="attendance-list">
-                  
-                </tbody>
-            </table>
         </div>
     </div>
 </section>
@@ -82,15 +176,15 @@
 
 {% block custom_js %}
 
-<script>
+<!-- Liên kết thư viện Instascan -->
+<script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
 
+
+<script>
     $(document).ready(function() {
-        
+        // Xử lý thay đổi trường session_id
         $('#session_id').change(function() {
             var session_id = $(this).val(); // Lấy ID trường đã chọn
-            console.log('gia trị da chọn: ', session_id)
-
-            
             if (session_id == "") {
                 $('#subject_id').html('<option value="">----</option>');
                 return;
@@ -104,7 +198,6 @@
                     session_id: session_id
                 },
                 success: function(response) {
-                    
                     var subjects = response.subjects;
                     var html = '<option value="">----</option>';
                     for (var i = 0; i < subjects.length; i++) {
@@ -117,74 +210,77 @@
                 }
             });
         });
-    });
 
-    document.getElementById("scan-qr-btn").addEventListener("click", function () {
-        console.log("Bắt đầu quét mã QR");
-        var subject_id = document.getElementById("subject_id").value;
-        var session_id = document.getElementById("session_id").value;
-        var date = document.getElementById("date").value;
+        // Xử lý nút quét mã QR
+        document.getElementById("scan-qr-btn").addEventListener("click", function () {
+            document.getElementById('shool').style.display = 'none';
+            document.getElementById('subject').style.display = 'none';
+            document.getElementById('btn_qr').style.display = 'none';
 
-        if (!subject_id || !session_id || !date) {
-            alert("Vui lòng chọn đầy đủ thông tin trước khi quét mã QR");
-            return;
-        }
+            // Initialize Instascan.Scanner
+            let scanner = new Instascan.Scanner({ video: document.getElementById('qr-reader') });
 
-        function onScanSuccess(decodedText, decodedResult) {
-            $.ajax({
-                url: "{% url 'qr_code_scanner' %}",
-                type: "POST",
-                data: {
-                    subject_id: subject_id,
-                    session_id: session_id,
-                    date: date,
-                    qr_code_data: decodedText,
-                    csrfmiddlewaretoken: document.querySelector("[name=csrfmiddlewaretoken]").value
-                },
-                success: function(response) {
-                    var alertClass = response.status === "success" ? "alert-success" : "alert-danger";
-                    $("#qr-reader-results").html(
-                        "<div class='alert " + alertClass + "' role='alert'>" + response.message + "</div>"
-                    );
-                    
-                    if (response.status === "success") {
-                        var studentRow = "<tr><td>" + ($("#attendance-list tr").length + 1) + "</td><td>" + response.student_id + "</td><td>" + response.student_name + "</td><td>" + response.timestamp + "</td></tr>";
-                        $("#attendance-list").append(studentRow);
+            // Listen for scan event
+            scanner.addListener('scan', function (content) {
+                console.log(content);
+
+                var subject_id = document.getElementById("subject_id").value;
+                var session_id = document.getElementById("session_id").value;
+                var date = document.getElementById("date").value;
+
+                // AJAX call to send data
+                $.ajax({
+                    url: "{% url 'qr_code_scanner' %}",
+                    type: "POST",
+                    data: {
+                        subject_id: subject_id,
+                        session_id: session_id,
+                        date: date,
+                        qr_code_data: content,
+                        csrfmiddlewaretoken: document.querySelector("[name=csrfmiddlewaretoken]").value
+                    },
+                    success: function(response) {
+                        var alertClass = response.status === "success" ? "alert-success" : "alert-danger";
+                        $("#qr-reader-results").html(
+                            "<div class='alert " + alertClass + "' role='alert'>" + response.message + "</div>"
+                        );
+                        
+                        if (response.status === "success") {
+                            var studentRow = "<tr><td>" + ($("#attendance-list tr").length + 1) + "</td><td>" + response.student_id + "</td><td>" + response.student_name + "</td><td>" + response.timestamp + "</td></tr>";
+                            $("#attendance-list").append(studentRow);
+                        }
+    
+                        setTimeout(function() {
+                            $("#qr-reader-results").html("");
+                        }, 3000);
+                    },
+                    error: function() {
+                        $("#qr-reader-results").html("<div class='alert alert-danger' role='alert'>Lỗi khi quét mã QR</div>");
+                        setTimeout(function() {
+                            $("#qr-reader-results").html("");
+                        }, 3000);
                     }
-
-                    setTimeout(function() {
-                        $("#qr-reader-results").html("");
-                    }, 3000);
-                },
-                error: function() {
-                    $("#qr-reader-results").html("<div class='alert alert-danger' role='alert'>Lỗi khi quét mã QR</div>");
-                    setTimeout(function() {
-                        $("#qr-reader-results").html("");
-                    }, 3000);
-                }
+                });
             });
-        }
 
-        function onScanFailure(error) {
-            console.warn(`Quét thất bại: ${error}`);
-        }
-
-        let html5QrCode = new Html5Qrcode("qr-reader");
-        html5QrCode.start(
-            { facingMode: "environment" },
-            { fps: 10, qrbox: { width: 250, height: 250 } },
-            onScanSuccess,
-            onScanFailure
-        ).catch(err => {
-            console.log(`Không thể khởi động QR code scanner: ${err}`);
+        // Lấy danh sách camera và chọn camera sau nếu có
+        Instascan.Camera.getCameras().then(function (cameras) {
+            if (cameras.length > 0) {
+                // Tìm camera sau
+                let backCamera = cameras.find(camera => camera.name.toLowerCase().includes('back')) || cameras[0];
+                // Bắt đầu quét với camera sau
+                scanner.start(backCamera);
+            } else {
+                console.error("Không có camera trên thiết bị!");
+            }
+        }).catch(function (e) {
+            console.error(e);
         });
     });
-
-    document.addEventListener("DOMContentLoaded", function() {
+        // Set current date in the date field
         var today = new Date().toISOString().split('T')[0];
-        document.getElementById('date').value = today;
+        document.getElementById('date').value = today;  // Thiết lập ngày hiện tại
     });
 </script>
 
-{% endblock custom_js %} 
-
+{% endblock custom_js %}

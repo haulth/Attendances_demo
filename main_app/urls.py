@@ -84,6 +84,7 @@ urlpatterns = [
     path('ajax/load-classes-student/', hod_views.load_classes_student, name='ajax_load_classes_student'),
     ##dăng ký tài khoản qua file xlsx
     path('import_csv/', hod_views.import_csv, name='import_csv'),
+    path('import_csv_teaching_schedule/', hod_views.import_csv_teaching_schedule, name='import_csv_teaching_schedule'),
     #xuất dữ liệu ra file xlsx
     path('export_attendance/', hod_views.export_attendance, name='export_attendance'),
     

@@ -12,35 +12,36 @@
   }
   
 </style>
+
 <section class="content">
   <div class="container-fluid">
     <div class="row">
-      <div class="col-md-12">
+      <div class="col-12">
         <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h3 class="card-title">{{ page_title }}</h3>
-
-            <div class="ml-auto d-flex align-items-center" style="flex-wrap: nowrap; gap: 10px;">
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+            <h3 class="card-title d-flex align-items-center flex-wrap">{{ page_title }}</h3>
+            <div class="ml-auto d-flex align-items-center flex-wrap" style="gap: 10px;">
               <!-- Nút Xóa tất cả với icon thùng rác -->
               <button id="deleteSelected" class="btn btn-danger d-flex align-items-center" style="white-space: nowrap;">
-                  <i class="fas fa-trash-alt mr-2"></i> Xóa tất cả
+                <i class="fas fa-trash-alt mr-2"></i> Xóa tất cả
               </button>
-          
               <!-- Nút Xuất dữ liệu ra Excel -->
               <button id="export_button" class="btn btn-success d-flex align-items-center" style="white-space: nowrap;">
-                  <i class="fas fa-file-excel mr-2"></i> Xuất dữ liệu ra Excel
+                <i class="fas fa-file-excel mr-2"></i> Xuất dữ liệu ra Excel
               </button>
-          
-              <!-- Ô tìm kiếm -->
-              <input id="searchInput" type="text" class="form-control" placeholder="Tìm kiếm..." style="max-width: 250px;">
+              
+            </div>
+            <!-- Ô tìm kiếm -->
+            <input id="searchInput" type="text" class="form-control d-flex align-items-center flex-wrap" placeholder="Tìm kiếm..." style="max-width: 250px; margin-left: 10px; ">
           </div>
-          
-          </div>
-          
+         
+
+       
+
           <div id="loadingSpinner" class="loader-container">
             <div class="loader"></div>
           </div>
-  
+
           <div class="card-body">
             <div class="table-responsive">
               <table id="example2" class="table table-bordered table-hover">
@@ -63,30 +64,38 @@
                     <td><input type="checkbox" class="studentCheckbox" value="{{ student.admin.id }}" /></td>
                     <td>{{ student.admin.last_name }} {{ student.admin.first_name }}</td>
                     <td>{{ student.admin.student_id }}</td>
-                    <td>{% if student.admin.gender == 'M' %} Nam {% elif student.admin.gender == 'F' %} Nữ {% else %} Không xác định {% endif %}</td>
+                    <td>
+                      {% if student.admin.gender == 'M' %}
+                      Nam
+                      {% elif student.admin.gender == 'F' %}
+                      Nữ
+                      {% else %}
+                      Không xác định
+                      {% endif %}
+                    </td>
                     <td>{{ student.course.name }}</td>
                     <td>{{ student.session.name }}</td>
                     <td>
                       {% if student.admin.qr_code %}
-                      <img class="img img-fluid mb-2" height="56" width="56" src="{{ student.admin.qr_code.url }}" alt="Mã QR"/>
-                      {% else %} Không có mã QR {% endif %}
+                      <img class="img img-fluid mb-2" height="56" width="56" src="{{ student.admin.qr_code.url }}" alt="Mã QR" />
+                      {% else %}
+                      Không có mã QR
+                      {% endif %}
                     </td>
                     <td>
-                      <a href="{% url 'edit_student' student.admin.id %}" class="btn btn-info">Chỉnh sửa</a> -
-                      <a href="{% url 'delete_student' student.admin.id %}" class="btn btn-danger" onclick="return confirm('Bạn có chắc chắn về điều này không?')">Xóa</a>
+                      <a href="{% url 'edit_student' student.admin.id %}" class="btn btn-info btn-sm">Chỉnh sửa</a>
+                      <a href="{% url 'delete_student' student.admin.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc chắn về điều này không?')">Xóa</a>
                     </td>
                   </tr>
                   {% endfor %}
                 </tbody>
                 {% else %}
-                <span class="badge badge-danger badge-pill"> <b>Không có sinh viên nào được tìm thấy.</b> </span>
+                <span class="badge badge-danger badge-pill"><b>Không có sinh viên nào được tìm thấy.</b></span>
                 <br>
                 {% endif %}
               </table>
-
               <div id="pagination" class="mt-3"></div>
               <!-- Nút xóa tất cả -->
-              
             </div>
           </div>
         </div>
@@ -95,15 +104,13 @@
   </div>
 </section>
 
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js" integrity="sha512-UnrKxsCMN9hFk7M56t4I4ckB4N/2HHi0w/7+B/1JsXIX3DmyBcsGpT3/BsuZMZf+6mAr0vP81syWtfynHJ69JA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script> 
 
 <!-- Script xuất file Excel -->
 <script>
-
-
-
   document.addEventListener('DOMContentLoaded', function () {
     const rowsPerPage = 10; // Số lượng dòng trên mỗi trang
     const tableBody = document.getElementById('studentTableBody');
@@ -266,7 +273,6 @@
         })
         .then(response => {
           if (response.ok) {
-            // Làm mới trang hoặc xử lý sau khi xóa thành công
             location.reload();
           } else {
             alert("Có lỗi xảy ra khi xóa tài khoản.");
