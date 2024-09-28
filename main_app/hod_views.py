@@ -26,7 +26,7 @@ from django.contrib import messages
 from datetime import datetime
 from django.db.models import Count
 from django.utils import timezone
-
+import pytz
 
 def admin_home(request):
     total_staff = Staff.objects.count()
@@ -35,58 +35,68 @@ def admin_home(request):
     total_subject = Subject.objects.count()
     total_teaching = TeachingSchedule.objects.count()
     subjects = Subject.objects.all()
+    courses = Course.objects.all()
+
+    # Lấy ngày hôm nay
+    vn_tz = pytz.timezone('Asia/Ho_Chi_Minh')
+    selected_date = timezone.now().astimezone(vn_tz).date()
+    
+    print(f'ngày được chọn: {selected_date}')
 
     # Dữ liệu danh sách tên các lớp và số học sinh điểm danh hôm nay
     subject_list = []
     student_present_today_list = []
     student_absent_today_list = []  # Danh sách số học sinh vắng mặt theo lớp
+    course_student_counts = {}
+    
+    for course in courses:
+        course_name = course.name  # Lấy tên khóa học
+        # Khởi tạo 
+        if course_name not in course_student_counts:
+            course_student_counts[course_name] = {}
+
+        # Lấy danh sách lớp
+        subjects_in_course = Subject.objects.filter(course=course)
+
+        for subject in subjects_in_course:
+            # Lấy số lượng học sinh trong lớp 
+            total_students_in_subject = Student.objects.filter(course=course, session=subject).count()
+
+            # Lưu số học sinh cho từng lớp
+            course_student_counts[course_name][subject.name] = total_students_in_subject
 
     for subject in subjects:
-        # Lấy danh sách tên môn học
+        # Lấy danh sách lớp học
         subject_list.append(subject.name)
 
-        # Lấy số lượng học sinh đã điểm danh trong ngày hôm nay cho lớp học này
-        present_today_count = Attendance.objects.filter(
-            subject=subject,
-            date=timezone.now().date(),
-            attendancereport__status=True,  # Chỉ lấy những học sinh có trạng thái 'đã điểm danh'
+        # Lấy tất cả các bản ghi điểm danh trong lớp theo ngày đã chọn
+        attendances = Attendance.objects.filter(
+            subject=subject, 
+            date=selected_date  # Sử dụng ngày được chọn
+        )
+
+        # Số học sinh có mặt trong lớp vào ngày được chọn
+        present_count = AttendanceReport.objects.filter(
+            attendance__in=attendances,
+            status=True  # Học sinh có mặt
         ).count()
 
-        # Thêm số lượng học sinh đã điểm danh vào danh sách
-        student_present_today_list.append(present_today_count)
+        # Số học sinh vắng mặt trong lớp vào ngày được chọn
+        absent_count = AttendanceReport.objects.filter(
+            attendance__in=attendances,
+            status=False  # Học sinh vắng mặt
+        ).count()
 
-        # Lấy số lượng học sinh tổng trong lớp để tính số học sinh vắng mặt
-        total_students_in_subject = Student.objects.filter(course__subject=subject).count()
+        # Thêm số lượng học sinh đã điểm danh và vắng mặt vào danh sách
+        student_present_today_list.append(present_count)
+        student_absent_today_list.append(absent_count)
 
-        # Tính số học sinh vắng mặt
-        absent_today_count = total_students_in_subject - present_today_count
-        student_absent_today_list.append(absent_today_count)  # Thêm số học sinh vắng mặt vào danh sách
-
-    # Dữ liệu cho tổng số học sinh và số môn học trong mỗi khóa học
-    course_data = Course.objects.annotate(
-        student_count=Count("student"), subject_count=Count("subject")
-    )
-
-    course_name_list = [course.name for course in course_data]
-
-    student_count_list_by_school = []
-    course_name_list = []
-    courses = Course.objects.all()
-
-    for course in courses:
-        course_name_list.append(course.name)  # Lưu tên trường 
-        student_count = Student.objects.filter(
-            course=course
-        ).count()  # Đếm số lượng học sinh
-        student_count_list_by_school.append(student_count)  # Lưu số lượng học sinh
+    # Lấy số lớp học có lịch trong ngày được chọn
+    classes_with_schedule_today = TeachingSchedule.objects.filter(
+        schedule_date=selected_date 
+    ).values('class_name').distinct().count()
 
     total_classes = subjects.count()
-    classes_with_schedule_today = (
-        TeachingSchedule.objects.filter(schedule_date=timezone.now().date())
-        .values("class_name")
-        .distinct()
-        .count()
-    )
 
     context = {
         "page_title": "Bảng điều khiển ADMIN",
@@ -98,10 +108,10 @@ def admin_home(request):
         "total_teaching": total_teaching,
         "student_absent_today_list": student_absent_today_list,  # Danh sách số học sinh vắng mặt theo lớp
         "student_present_today_list": student_present_today_list,  # Danh sách số học sinh có mặt theo lớp
-        "course_name_list": json.dumps(course_name_list),
-        "student_count_list_by_school": student_count_list_by_school,
         "total_classes": total_classes,
-        "classes_with_schedule_today": classes_with_schedule_today,
+        "classes_with_schedule_today": classes_with_schedule_today,  # Số lớp có lịch học hôm nay
+        "course_student_counts": json.dumps(course_student_counts),
+       
     }
     print(context)
     return render(request, "hod_template/home_content.html", context)

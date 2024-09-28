@@ -211,7 +211,7 @@
             },
             title: {
                 display: true,
-                text: 'Học sinh có và vắng mặt theo lớp',
+                text: 'Biểu đồ học sinh có và vắng mặt theo lớp',
                 fontColor: 'black', // Màu chữ của tiêu đề
                 fontSize: 16
             },
@@ -279,6 +279,12 @@
             }
           }
         },
+        title: {
+          display: true,
+          text: 'Biểu đồ tổng quan lịch học',
+          fontColor: 'black',
+          fontSize: 16
+      },
         hover: {
           mode: 'nearest',
           intersect: true,
@@ -312,100 +318,116 @@
       });
     });
     
-    var course_name_list = {{ course_name_list|safe }};
-    var student_count_list_by_school = {{ student_count_list_by_school|safe|escapejs }};
-
-    if (Array.isArray(course_name_list) && Array.isArray(student_count_list_by_school)) {
-        var schoolOverviewChartCanvas = $('#schoolOverviewChart').get(0).getContext('2d');
-        
-        // Dữ liệu biểu đồ
-        var schoolOverviewChartData = {
-            labels: course_name_list,
-            datasets: [{
-                label: 'Số học sinh',
-                backgroundColor: ['#36a2eb'], 
-                borderColor: '#fff',
-                borderWidth: 2,
-                hoverBackgroundColor: ['#36a2eb'],   // Màu nổi bật khi hover
-                hoverBorderColor: '#000',  // Đường viền đen khi hover
-                data: student_count_list_by_school
-            }]
-        };
-        
-        // Tùy chọn hiển thị
-        var schoolOverviewChartOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true,
-                        stepSize: 10,  // Điều chỉnh bước nhảy phù hợp với dữ liệu lớn hơn
-                        fontColor: '#333',  // Màu chữ trục Y
-                        callback: function(value) { return value + " học sinh"; }  // Thêm đơn vị vào trục Y
-                    },
-                    gridLines: {
-                        color: '#e9ecef'  // Màu lưới nhẹ
-                    }
-                }],
-                xAxes: [{
-                    ticks: {
-                        fontColor: '#333',  // Màu chữ trục X
-                        fontSize: 12
-                    },
-                    gridLines: {
-                        color: '#e9ecef'  // Màu lưới nhẹ
-                    }
-                }]
-            },
-            legend: {
-                display: true,
-                labels: {
-                    fontColor: '#000',  // Màu chữ cho legend
-                    fontSize: 14
-                }
-            },
-            title: {
-                display: true,
-                text: 'Biểu đồ tổng quan học sinh mỗi trường',
-                fontColor: '#333',  // Màu tiêu đề
-                fontSize: 18,
-                fontFamily: 'Arial'
-            },
-            // Thêm hiệu ứng animation
-            animation: {
-                duration: 1500,  // Thời gian animation (1.5 giây)
-                easing: 'easeOutBounce',  // Hiệu ứng bật khi hiển thị
-                animateScale: true,
-                animateRotate: true
-            },
-            hover: {
-                animationDuration: 1000,  // Hiệu ứng khi hover
-            },
-            tooltips: {
-                enabled: true,
-                backgroundColor: '#000',  // Màu nền tooltip
-                titleFontColor: '#fff',  // Màu chữ tiêu đề tooltip
-                bodyFontColor: '#fff',  // Màu chữ nội dung tooltip
-                callbacks: {
-                    label: function(tooltipItem, data) {
-                        var label = data.datasets[0].label || '';
-                        var value = tooltipItem.yLabel;
-                        return label + ': ' + value + ' học sinh';
-                    }
-                }
-            }
-        };
-
-        // Tạo biểu đồ
-        var schoolOverviewChart = new Chart(schoolOverviewChartCanvas, {
-            type: 'bar',
-            data: schoolOverviewChartData,
-            options: schoolOverviewChartOptions
-        });
-    }
-
-
+    //biểu đồ tổng quan
+    $(document).ready(function() {
+      var course_student_counts = {{ course_student_counts|safe }}; // Nhận dữ liệu số học sinh theo trường và lớp
+  
+      // Khai báo biến
+      var labels = Object.keys(course_student_counts);  // Tên các trường sẽ là nhãn (labels)
+      var datasets = [];  // Các dữ liệu về số học sinh theo lớp
+  
+      var colors = [
+        '#36a2eb', '#ff6384', '#4bc0c0', '#ffcd56', '#c9cbcf', '#8e44ad', 
+        '#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#e67e22', '#1abc9c', 
+        '#2c3e50', '#9b59b6', '#34495e', '#f39c12', '#d35400', '#c0392b'
+    ];
+ // Mảng màu để phân biệt từng lớp
+  
+      var colorIndex = 0;  // Đếm màu cho các lớp
+  
+      // Tạo dữ liệu cho biểu đồ theo từng trường
+      for (var course in course_student_counts) {
+          var subjects = course_student_counts[course];
+  
+          for (var subject in subjects) {
+              // Thêm từng lớp vào dataset, gán màu và dữ liệu số học sinh cho đúng trường
+              datasets.push({
+                  label: 'Lớp '+ subject ,  // Nhãn cho lớp
+                  data: labels.map(label => label === course ? subjects[subject] : 0),  // Số học sinh theo lớp, chỉ hiển thị đúng tại trường tương ứng
+                  backgroundColor: colors[colorIndex % colors.length],  // Màu nền cho lớp
+                  borderColor: '#fff',
+                  borderWidth: 2,
+              });
+              colorIndex++;
+          }
+      }
+  
+      // Tạo biểu đồ
+      var schoolOverviewChartCanvas = $('#schoolOverviewChart').get(0).getContext('2d');
+  
+      var schoolOverviewChartData = {
+          labels: labels,
+          datasets: datasets,
+      };
+  
+      // Tùy chọn hiển thị
+      var schoolOverviewChartOptions = {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+              yAxes: [{
+                  ticks: {
+                      beginAtZero: true,
+                      stepSize: 1,
+                      fontColor: 'black',
+                      callback: function(value) { return value + " học sinh"; }
+                  },
+                  gridLines: {
+                      color: 'green'
+                  }
+              }],
+              xAxes: [{
+                  ticks: {
+                      fontColor: 'blue',
+                      autoSkip: false
+                  },
+                  gridLines: {
+                      color: 'green'
+                  }
+              }]
+          },
+          legend: {
+              labels: {
+                  fontColor: 'blue',
+                  fontSize: 14
+              }
+          },
+          title: {
+              display: true,
+              text: 'Biểu đồ tổng quan học sinh theo trường và lớp',
+              fontColor: 'black',
+              fontSize: 16
+          },
+          animation: {
+              duration: 1500,
+              easing: 'easeOutBounce',
+              animateScale: true,
+              animateRotate: true
+          },
+          tooltips: {
+              enabled: true,
+              backgroundColor: '#000',
+              titleFontColor: '#fff',
+              bodyFontColor: '#fff',
+              callbacks: {
+                  label: function(tooltipItem, data) {
+                      var label = data.datasets[tooltipItem.datasetIndex].label || '';
+                      var value = tooltipItem.yLabel;
+                      return label + ': ' + value + ' học sinh';
+                  }
+              }
+          }
+      };
+  
+      // Tạo biểu đồ
+      var schoolOverviewChart = new Chart(schoolOverviewChartCanvas, {
+          type: 'bar',
+          data: schoolOverviewChartData,
+          options: schoolOverviewChartOptions
+      });
+  });
+  
+  
     // Hiển thị ngày hiện tại
     var today = new Date();
     var date = today.getDate() + '/' + (today.getMonth() + 1) + '/' + today.getFullYear();
