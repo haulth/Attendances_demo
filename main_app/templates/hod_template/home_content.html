@@ -51,7 +51,7 @@
         <div class="col-lg-3 col-6">
           <div class="small-box bg-light"> 
             <div class="inner">
-              <h3>{{ total_subject }}</h3>
+              <h3>{{ total_subject }}</h3> 
               <p>Tổng số lớp học</p>
             </div>
             <div class="icon">
@@ -88,12 +88,12 @@
         </div>
       </div>
 
-      <div class="row">
+     <div class="row">
         <div class="col-md-6">
             <!-- BAR CHART for Students Present Today by Class -->
             <div class="card card-dark">
                 <div class="card-header">
-                    <h3 class="card-title" id="current-date">Số học sinh điểm danh trong ngày: </h3>
+                    <h3 class="card-title" id="current-date">Học sinh có và vắng mặt ngày: </h3>
                     <div class="card-tools">
                         <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
                         <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
@@ -105,13 +105,13 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> 
     
         <div class="col-md-6">
             <!-- Pie Chart for Classes with Schedule Today -->
             <div class="card card-dark">
                 <div class="card-header">
-                    <h3 class="card-title" id="current-date1">Lịch học hôm nay: </h3>
+                    <h3 class="card-title" id="current-date1">Lịch học ngày: </h3>
                     <div class="card-tools">
                         <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
                         <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
@@ -146,7 +146,7 @@
         </div>
     </div>
     <!-- /.container-fluid -->
-  </section>
+</section>
 
 {% endblock %}
 {% block custom_js %}
@@ -157,34 +157,78 @@
   var classScheduleChart;
 
   $(document).ready(function() {
-
-    //biểu đồ số học sinh học trong ngày
+    // Biểu đồ số học sinh điểm danh hôm nay
     var studentsPresentChartCanvas = $('#studentsPresentChart').get(0).getContext('2d');
-    studentsPresentChart = new Chart(studentsPresentChartCanvas, {
-      type: 'bar',
-      data: {
-        labels: {{ subject_list|safe }},
-        datasets: [{
-          label: 'Học sinh có mặt',
-          backgroundColor: '#00a65a',
-          data: {{ student_present_today_list|safe|escapejs }}  
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          yAxes: [{
-            ticks: {
-              beginAtZero: true,
-              stepSize: 1
+
+    // Chuyển đổi subject_list từ chuỗi JSON thành mảng
+    var subjectList = JSON.parse('{{ subject_list|safe }}');
+
+    // Tạo biểu đồ
+    studentsPresentChart = new Chart(studentsPresentChartCanvas, {  // Không khai báo lại
+        type: 'bar',
+        data: {
+            labels: subjectList,
+            datasets: [
+                {
+                    label: 'Học sinh có mặt',
+                    backgroundColor: '#00a65a',
+                    data: {{ student_present_today_list|safe|escapejs }} // Số lượng học sinh có mặt
+                },
+                {
+                    label: 'Học sinh vắng mặt',
+                    backgroundColor: '#f39c12',
+                    data: {{ student_absent_today_list }} // Số lượng học sinh vắng mặt
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        stepSize: 1,
+                        fontColor: 'black' // Màu chữ trên trục y
+                    },
+                    gridLines: {
+                        color: 'green' // Màu lưới
+                    }
+                }],
+                xAxes: [{
+                    ticks: {
+                        fontColor: 'blue' // Màu chữ trên trục x
+                    },
+                    gridLines: {
+                        color: 'green' // Màu lưới
+                    }
+                }]
+            },
+            legend: {
+                labels: {
+                    fontColor: 'blue' // Màu chữ của legend
+                }
+            },
+            title: {
+                display: true,
+                text: 'Biểu đồ học sinh có và vắng mặt theo lớp',
+                fontColor: 'black', // Màu chữ của tiêu đề
+                fontSize: 16
+            },
+            animation: {
+                duration: 2000,
+                easing: 'easeOutBounce',
+                animateScale: true,
+                animateRotate: true
+            },
+            hover: {
+                animationDuration: 1000,  // Hiệu ứng khi hover (1 giây)
             }
-          }]
         }
-      }
     });
 
-    // biểu đồ lịch học hôm nay
+  
+    // Biểu đồ lịch học hôm nay
     var classScheduleChartCanvas = $('#classScheduleChart').get(0).getContext('2d');
     classScheduleChart = new Chart(classScheduleChartCanvas, {
       type: 'pie',
@@ -192,8 +236,65 @@
         labels: ['Lớp có lịch học hôm nay', 'Lớp không có lịch học'],
         datasets: [{
           data: [{{ classes_with_schedule_today }}, {{ total_classes }} - {{ classes_with_schedule_today }}],
-          backgroundColor: ['#f39c12', '#00a65a']
+          backgroundColor: ['green', 'red'],  // Màu nổi bật và có độ tương phản cao
+          borderColor: '#fff',  // Đường viền trắng giúp làm nổi bật từng phần
+          borderWidth: 3
         }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Biểu đồ lịch học hôm nay',
+            font: {
+              size: 22,
+              weight: 'bold',  // Làm cho tiêu đề nổi bật hơn
+              family: 'Arial'
+            },
+            color: '#333'  // Màu đậm cho tiêu đề
+          },
+          tooltip: {
+            enabled: true,
+            callbacks: {
+              label: function(tooltipItem) {
+                var label = tooltipItem.label || '';
+                var value = tooltipItem.raw;
+                return label + ': ' + value + ' lớp';
+              }
+            },
+            backgroundColor: '#444',  // Màu nền tối cho tooltip
+            titleColor: '#fff',
+            bodyColor: '#fff'
+          },
+          legend: {
+            display: true,
+            position: 'top',
+            labels: {
+              font: {
+                size: 16
+              },
+              color: '#000'  // Màu đen cho chú thích
+            }
+          }
+        },
+        title: {
+          display: true,
+          text: 'Biểu đồ tổng quan lịch học',
+          fontColor: 'black',
+          fontSize: 16
+      },
+        hover: {
+          mode: 'nearest',
+          intersect: true,
+          animationDuration: 400  // Thêm hiệu ứng hover mượt mà
+        },
+        animation: {
+          animateScale: true,
+          animateRotate: true,
+          duration: 1500  // Tăng thời gian hiển thị biểu đồ để tạo hiệu ứng mượt
+        }
       }
     });
 
@@ -207,60 +308,133 @@
         data: { date: selectedDate },
         success: function(response) {
           console.log(response);  
-          if (response.student_present_today_list && response.classes_with_schedule_today !== undefined && response.total_classes !== undefined) {
-            updateCharts(response.student_present_today_list, response.classes_with_schedule_today, response.total_classes);
-          } else {
-            console.error("Dữ liệu trả về không đầy đủ hoặc không hợp lệ.");
-          }
+        
+          updateCharts(response.student_present_today_list,response.student_absent_today_list, response.classes_with_schedule_today, response.total_classes);
+          
         },
         error: function(xhr, status, error) {
           console.error("Lỗi khi gửi yêu cầu AJAX:", status, error);
         }
       });
     });
-
-    // Biểu đồ "Tổng quan trường"
-    var course_name_list = {{ course_name_list|safe }};
-    var student_count_list_by_school = {{ student_count_list_by_school|safe|escapejs }};
-
-    // Kiểm tra dữ liệu có phải là mảng và có giá trị hay không
-    if (Array.isArray(course_name_list) && Array.isArray(student_count_list_by_school)) {
+    
+    //biểu đồ tổng quan
+    $(document).ready(function() {
+      var course_student_counts = {{ course_student_counts|safe }}; // Nhận dữ liệu số học sinh theo trường và lớp
+  
+      // Khai báo biến
+      var labels = Object.keys(course_student_counts);  // Tên các trường sẽ là nhãn (labels)
+      var datasets = [];  // Các dữ liệu về số học sinh theo lớp
+  
+      var colors = [
+        '#36a2eb', '#ff6384', '#4bc0c0', '#ffcd56', '#c9cbcf', '#8e44ad', 
+        '#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#e67e22', '#1abc9c', 
+        '#2c3e50', '#9b59b6', '#34495e', '#f39c12', '#d35400', '#c0392b'
+    ];
+ // Mảng màu để phân biệt từng lớp
+  
+      var colorIndex = 0;  // Đếm màu cho các lớp
+  
+      // Tạo dữ liệu cho biểu đồ theo từng trường
+      for (var course in course_student_counts) {
+          var subjects = course_student_counts[course];
+  
+          for (var subject in subjects) {
+              // Thêm từng lớp vào dataset, gán màu và dữ liệu số học sinh cho đúng trường
+              datasets.push({
+                  label: 'Lớp '+ subject ,  // Nhãn cho lớp
+                  data: labels.map(label => label === course ? subjects[subject] : 0),  // Số học sinh theo lớp, chỉ hiển thị đúng tại trường tương ứng
+                  backgroundColor: colors[colorIndex % colors.length],  // Màu nền cho lớp
+                  borderColor: '#fff',
+                  borderWidth: 2,
+              });
+              colorIndex++;
+          }
+      }
+  
+      // Tạo biểu đồ
       var schoolOverviewChartCanvas = $('#schoolOverviewChart').get(0).getContext('2d');
+  
       var schoolOverviewChartData = {
-        labels: course_name_list,
-        datasets: [{
-          label: 'Số học sinh',
-          backgroundColor: '#3c8dbc',
-          data: student_count_list_by_school
-        }]
+          labels: labels,
+          datasets: datasets,
       };
-      
+  
+      // Tùy chọn hiển thị
       var schoolOverviewChartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          yAxes: [{
-            ticks: {
-              beginAtZero: true,
-              stepSize: 1 // Cố định bước nhảy cho trục y
-            }
-          }]
-        }
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+              yAxes: [{
+                  ticks: {
+                      beginAtZero: true,
+                      stepSize: 1,
+                      fontColor: 'black',
+                      callback: function(value) { return value + " học sinh"; }
+                  },
+                  gridLines: {
+                      color: 'green'
+                  }
+              }],
+              xAxes: [{
+                  ticks: {
+                      fontColor: 'blue',
+                      autoSkip: false
+                  },
+                  gridLines: {
+                      color: 'green'
+                  }
+              }]
+          },
+          legend: {
+              labels: {
+                  fontColor: 'blue',
+                  fontSize: 14
+              }
+          },
+          title: {
+              display: true,
+              text: 'Biểu đồ tổng quan học sinh theo trường và lớp',
+              fontColor: 'black',
+              fontSize: 16
+          },
+          animation: {
+              duration: 1500,
+              easing: 'easeOutBounce',
+              animateScale: true,
+              animateRotate: true
+          },
+          tooltips: {
+              enabled: true,
+              backgroundColor: '#000',
+              titleFontColor: '#fff',
+              bodyFontColor: '#fff',
+              callbacks: {
+                  label: function(tooltipItem, data) {
+                      var label = data.datasets[tooltipItem.datasetIndex].label || '';
+                      var value = tooltipItem.yLabel;
+                      return label + ': ' + value + ' học sinh';
+                  }
+              }
+          }
       };
-
-      // Khởi tạo biểu đồ
+  
+      // Tạo biểu đồ
       var schoolOverviewChart = new Chart(schoolOverviewChartCanvas, {
-        type: 'bar',
-        data: schoolOverviewChartData,
-        options: schoolOverviewChartOptions
+          type: 'bar',
+          data: schoolOverviewChartData,
+          options: schoolOverviewChartOptions
       });
-    }
-
+  });
+  
+  
     // Hiển thị ngày hiện tại
     var today = new Date();
     var date = today.getDate() + '/' + (today.getMonth() + 1) + '/' + today.getFullYear();
     document.getElementById('current-date').innerHTML += date;
     document.getElementById('current-date1').innerHTML += date;
+
+  });
 
     // Xử lý hiển thị ngày cho ngày đã chọn
     $('#datePicker').on('change', function() {
@@ -277,17 +451,26 @@
         document.getElementById('current-date1').innerHTML = "Lịch học hôm nay: " + date;
       }
     });
-  });
+
 
   // Chức năng cập nhật biểu đồ khi nhận dữ liệu mới
-  function updateCharts(studentData, classesWithSchedule, totalClasses) {
-    // cập nhật học sinh có mặt
+  function updateCharts(studentData, absentData, classesWithSchedule, totalClasses) {
+    // Nếu dữ liệu rỗng, gán giá trị mặc định là 0
+    studentData = studentData.length > 0 ? studentData : [0];
+    absentData = absentData.length > 0 ? absentData : [0];
+  
+    // Cập nhật biểu đồ với học sinh có mặt
     studentsPresentChart.data.datasets[0].data = studentData;
-    studentsPresentChart.update();  // Trigger the update
-
-    // cập nhật lịch học hôm nay
+    studentsPresentChart.data.datasets[1].data = absentData;
+    studentsPresentChart.update();
+  
+    // Cập nhật biểu đồ với số lớp có lịch học hôm nay
     classScheduleChart.data.datasets[0].data = [classesWithSchedule, totalClasses - classesWithSchedule];
-    classScheduleChart.update();  // Trigger the update
+    classScheduleChart.update();
   }
+  
+
+
 </script>
+
 {% endblock  %}

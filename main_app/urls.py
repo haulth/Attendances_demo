@@ -19,130 +19,112 @@ from main_app.EditResultView import EditResultView
 
 from . import hod_views, staff_views, student_views, views
 
+
 urlpatterns = [
+    # General Views
     path("", views.login_page, name='login_page'),
     path("get_attendance", views.get_attendance, name='get_attendance'),
-#     path("firebase-messaging-sw.js", views.showFirebaseJS, name='showFirebaseJS'),
     path("doLogin/", views.doLogin, name='user_login'),
     path("logout_user/", views.logout_user, name='user_logout'),
+
+    # Admin / HOD Views
+    # Dashboard and Profile Management
     path("admin/home/", hod_views.admin_home, name='admin_home'),
-    path('filter-data-by-date/', hod_views.filter_data_by_date, name='filter_data_by_date'),
-    path("staff/add", hod_views.add_staff, name='add_staff'),
-    path("course/add", hod_views.add_course, name='add_course'),
-    path("send_student_notification/", hod_views.send_student_notification,
-         name='send_student_notification'),
-    path("send_staff_notification/", hod_views.send_staff_notification,
-         name='send_staff_notification'),
-    path("add_session/", hod_views.add_session, name='add_session'),
-    path("admin_notify_student", hod_views.admin_notify_student,
-         name='admin_notify_student'),
-    path("admin_notify_staff", hod_views.admin_notify_staff,
-         name='admin_notify_staff'),
-    path("admin_view_profile", hod_views.admin_view_profile,
-         name='admin_view_profile'),
-    path("check_email_availability", hod_views.check_email_availability,
-         name="check_email_availability"),
-    path("session/manage/", hod_views.manage_session, name='manage_session'),
-    path("session/edit/<int:session_id>",
-         hod_views.edit_session, name='edit_session'),
-    path("student/view/feedback/", hod_views.student_feedback_message,
-         name="student_feedback_message",),
-    path("staff/view/feedback/", hod_views.staff_feedback_message,
-         name="staff_feedback_message",),
-    path("student/view/leave/", hod_views.view_student_leave,
-         name="view_student_leave",),
-    path("staff/view/leave/", hod_views.view_staff_leave, name="view_staff_leave",),
-    path("attendance/view/", hod_views.admin_view_attendance,
-         name="admin_view_attendance",),
-    path("attendance/fetch/", hod_views.get_admin_attendance,
-         name='get_admin_attendance'),
-    path("student/add/", hod_views.add_student, name='add_student'),
-    path("subject/add/", hod_views.add_subject, name='add_subject'),
-    path("staff/manage/", hod_views.manage_staff, name='manage_staff'),
-    path("student/manage/", hod_views.manage_student, name='manage_student'),
-    path("course/manage/", hod_views.manage_course, name='manage_course'),
-    path("subject/manage/", hod_views.manage_subject, name='manage_subject'),
-    path("staff/edit/<int:staff_id>", hod_views.edit_staff, name='edit_staff'),
-    path("staff/delete/<int:staff_id>",
-         hod_views.delete_staff, name='delete_staff'),
-    path("course/delete/<int:course_id>",
-         hod_views.delete_course, name='delete_course'),
-    path("subject/delete/<int:subject_id>",
-         hod_views.delete_subject, name='delete_subject'),
-    path("session/delete/<int:session_id>",
-         hod_views.delete_session, name='delete_session'),
-    path("student/delete/<int:student_id>",
-         hod_views.delete_student, name='delete_student'),
-    path("delete_students/", hod_views.delete_students, name='delete_students'),
-    path("student/edit/<int:student_id>",
-         hod_views.edit_student, name='edit_student'),
-    path("course/edit/<int:course_id>",
-         hod_views.edit_course, name='edit_course'),
-    path("subject/edit/<int:subject_id>",
-         hod_views.edit_subject, name='edit_subject'),
-    path('ajax/load-classes/', hod_views.load_classes, name='ajax_load_classes'),
-    path('ajax/load-classes-student/', hod_views.load_classes_student, name='ajax_load_classes_student'),
-    ##dăng ký tài khoản qua file xlsx
-    path('import_csv/', hod_views.import_csv, name='import_csv'),
-    #xuất dữ liệu ra file xlsx
-    path('export_attendance/', hod_views.export_attendance, name='export_attendance'),
+    path("admin_view_profile", hod_views.admin_view_profile, name='admin_view_profile'),
     
-    #phân trang
-    path('manage_students/', hod_views.manage_students, name='manage_students'),
-    path('complete_teaching_schedule/', staff_views.complete_teaching_schedule, name='complete_teaching_schedule'),
+    # Staff Management
+    path("staff/add", hod_views.add_staff, name='add_staff'),
+    path("staff/manage/", hod_views.manage_staff, name='manage_staff'),
+    path("staff/edit/<int:staff_id>", hod_views.edit_staff, name='edit_staff'),
+    path("staff/delete/<int:staff_id>", hod_views.delete_staff, name='delete_staff'),
     path('add_staff_csv/', hod_views.add_staff_csv, name='add_staff_csv'),
-    path('get_subjects_by_session/', hod_views.get_subjects_by_session, name='get_subjects_by_session'),
+
+    # Course and Subject Management
+    path("course/add", hod_views.add_course, name='add_course'),
+    path("course/manage/", hod_views.manage_course, name='manage_course'),
+    path("course/edit/<int:course_id>", hod_views.edit_course, name='edit_course'),
+    path("course/delete/<int:course_id>", hod_views.delete_course, name='delete_course'),
+
+    path("subject/add/", hod_views.add_subject, name='add_subject'),
+    path("subject/manage/", hod_views.manage_subject, name='manage_subject'),
+    path("subject/edit/<int:subject_id>", hod_views.edit_subject, name='edit_subject'),
+    path("subject/delete/<int:subject_id>", hod_views.delete_subject, name='delete_subject'),
+
+    # Student Management
+    path("student/add/", hod_views.add_student, name='add_student'),
+    path("student/manage/", hod_views.manage_student, name='manage_student'),
+    path("student/edit/<int:student_id>", hod_views.edit_student, name='edit_student'),
+    path("student/delete/<int:student_id>", hod_views.delete_student, name='delete_student'),
+    path("delete_students/", hod_views.delete_students, name='delete_students'),
+
+    # Session Management
+    path("add_session/", hod_views.add_session, name='add_session'),
+    path("session/manage/", hod_views.manage_session, name='manage_session'),
+    path("session/edit/<int:session_id>", hod_views.edit_session, name='edit_session'),
+    path("session/delete/<int:session_id>", hod_views.delete_session, name='delete_session'),
+
+    # Notifications
+    path("send_student_notification/", hod_views.send_student_notification, name='send_student_notification'),
+    path("send_staff_notification/", hod_views.send_staff_notification, name='send_staff_notification'),
+    path("admin_notify_student", hod_views.admin_notify_student, name='admin_notify_student'),
+    path("admin_notify_staff", hod_views.admin_notify_staff, name='admin_notify_staff'),
+
+    # Feedback and Leave Management
+    path("student/view/feedback/", hod_views.student_feedback_message, name="student_feedback_message"),
+    path("staff/view/feedback/", hod_views.staff_feedback_message, name="staff_feedback_message"),
+    path("student/view/leave/", hod_views.view_student_leave, name="view_student_leave"),
+    path("staff/view/leave/", hod_views.view_staff_leave, name="view_staff_leave"),
+
+    # Attendance Management
+    path("attendance/view/", hod_views.admin_view_attendance, name="admin_view_attendance"),
+    path("attendance/fetch/", hod_views.get_admin_attendance, name='get_admin_attendance'),
+    path('export_attendance/', hod_views.export_attendance, name='export_attendance'),
     path('delete-attendance/', hod_views.delete_attendance, name='delete_attendance'),
 
+    # Filtering and Loading Data
+    path('filter-data-by-date/', hod_views.filter_data_by_date, name='filter_data_by_date'),
+    path('ajax/load-classes/', hod_views.load_classes, name='ajax_load_classes'),
+    path('ajax/load-classes-student/', hod_views.load_classes_student, name='ajax_load_classes_student'),
+    path('get_subjects_by_session/', hod_views.get_subjects_by_session, name='get_subjects_by_session'),
 
-    # Staff
+    # CSV Import/Export
+    path('import_csv/', hod_views.import_csv, name='import_csv'),
+    path('import_csv_teaching_schedule/', hod_views.import_csv_teaching_schedule, name='import_csv_teaching_schedule'),
+
+    # Staff-Specific Views
     path("staff/home/", staff_views.staff_home, name='staff_home'),
-    path("staff/schedule", staff_views.staff_apply_leave,
-         name='staff_apply_leave'),
+    path("staff/schedule", staff_views.staff_apply_leave, name='staff_apply_leave'),
     path("staff/feedback/", staff_views.staff_feedback, name='staff_feedback'),
-    path("staff/view/profile/", staff_views.staff_view_profile,
-         name='staff_view_profile'),
-    path("staff/attendance/take/", staff_views.staff_take_attendance,
-         name='staff_take_attendance'),
-    path("staff/attendance/update/", staff_views.staff_update_attendance,
-         name='staff_update_attendance'),
+    path("staff/view/profile/", staff_views.staff_view_profile, name='staff_view_profile'),
+    
+    # Attendance for Staff
+    path("staff/attendance/take/", staff_views.staff_take_attendance, name='staff_take_attendance'),
+    path("staff/attendance/update/", staff_views.staff_update_attendance, name='staff_update_attendance'),
     path("staff/get_students/", staff_views.get_students, name='get_students'),
-    path("staff/attendance/fetch/", staff_views.get_student_attendance,
-         name='get_student_attendance'),
-    path("staff/attendance/save/",
-         staff_views.save_attendance, name='save_attendance'),
-    path("staff/attendance/update/",
-         staff_views.update_attendance, name='update_attendance'),
+    path("staff/attendance/fetch/", staff_views.get_student_attendance, name='get_student_attendance'),
+    path("staff/attendance/save/", staff_views.save_attendance, name='save_attendance'),
+    path("staff/attendance/update/", staff_views.update_attendance, name='update_attendance'),
+
+    # Notifications for Staff
     path("staff/fcmtoken/", staff_views.staff_fcmtoken, name='staff_fcmtoken'),
-    path("staff/view/notification/", staff_views.staff_view_notification,
-         name="staff_view_notification"),
+    path("staff/view/notification/", staff_views.staff_view_notification, name="staff_view_notification"),
+
+    # Results for Staff
     path("staff/result/add/", staff_views.staff_add_result, name='staff_add_result'),
-    path("staff/result/edit/", EditResultView.as_view(),
-         name='edit_student_result'),
-    path('staff/result/fetch/', staff_views.fetch_student_result,
-         name='fetch_student_result'),
-    path('staff/qr_code_scanner/', staff_views.qr_code_scanner,
-         name='qr_code_scanner'),
-    path('staff/get_subjects_by_session_staff/', staff_views.get_subjects_by_session_staff,
-         name='get_subjects_by_session_staff'),
+    path("staff/result/edit/", EditResultView.as_view(), name='edit_student_result'),
+    path('staff/result/fetch/', staff_views.fetch_student_result, name='fetch_student_result'),
 
+    # QR Code Scanner for Staff
+    path('staff/qr_code_scanner/', staff_views.qr_code_scanner, name='qr_code_scanner'),
+    path('staff/get_subjects_by_session_staff/', staff_views.get_subjects_by_session_staff, name='get_subjects_by_session_staff'),
 
-
-    # Student
+    # Student-Specific Views
     path("student/home/", student_views.student_home, name='student_home'),
-    path("student/view/attendance/", student_views.student_view_attendance,
-         name='student_view_attendance'),
-    path("student/apply/leave/", student_views.student_apply_leave,
-         name='student_apply_leave'),
-    path("student/feedback/", student_views.student_feedback,
-         name='student_feedback'),
-    path("student/view/profile/", student_views.student_view_profile,
-         name='student_view_profile'),
-    path("student/fcmtoken/", student_views.student_fcmtoken,
-         name='student_fcmtoken'),
-    path("student/view/notification/", student_views.student_view_notification,
-         name="student_view_notification"),
-    path('student/view/result/', student_views.student_view_result,
-         name='student_view_result'),
-
+    path("student/view/attendance/", student_views.student_view_attendance, name='student_view_attendance'),
+    path("student/apply/leave/", student_views.student_apply_leave, name='student_apply_leave'),
+    path("student/feedback/", student_views.student_feedback, name='student_feedback'),
+    path("student/view/profile/", student_views.student_view_profile, name='student_view_profile'),
+    path("student/fcmtoken/", student_views.student_fcmtoken, name='student_fcmtoken'),
+    path("student/view/notification/", student_views.student_view_notification, name="student_view_notification"),
+    path('student/view/result/', student_views.student_view_result, name='student_view_result'),
 ]

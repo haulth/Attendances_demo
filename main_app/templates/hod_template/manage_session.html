@@ -16,8 +16,13 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h3 class="card-title">{{page_title}}</h3>
-                        <!-- Trường tìm kiếm -->
-                        <div class="ml-auto">
+                        <!-- Nút thêm lịch dạy và trường tìm kiếm -->
+                        <div class="ml-auto d-flex align-items-center">
+                            <!-- Nút thêm lịch dạy -->
+                            {% url 'add_session' as add_session %}
+                            <a href="{{add_session}}" class="btn btn-primary d-flex align-items-center mr-2" style="white-space: nowrap;">
+                                <i class="fas fa-plus mr-2"></i> Thêm lịch dạy
+                            </a>
                             <input type="text" id="searchInput" onkeyup="searchTable()" class="form-control" placeholder="Tìm kiếm...">
                         </div>
                     </div>

@@ -5,11 +5,76 @@
 {% block page_title %}{{page_title}}{% endblock page_title %}
 
 {% block content %}
-
+<style>
+     /* HTML: <div class="loader"></div> */
+     .loader-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.7); /* Blurred overlay */
+      z-index: 9999;
+    }
+  
+    /* Loader animation */
+    .loader {    
+      --r1: 154%;
+      --r2: 68.5%;
+      width: 60px;
+      aspect-ratio: 1;
+      border-radius: 50%; 
+      background:
+        radial-gradient(var(--r1) var(--r2) at top   ,#0000 79.5%,#269af2 80%),
+        radial-gradient(var(--r1) var(--r2) at bottom,#269af2 79.5%,#0000 80%),
+        radial-gradient(var(--r1) var(--r2) at top   ,#0000 79.5%,#269af2 80%),
+        #ccc;
+      background-size: 50.5% 220%;
+      background-position: -100% 0%,0% 0%,100% 0%;
+      background-repeat: no-repeat;
+      animation: l9 2s infinite linear;
+    }
+  
+    /* Keyframe animation for loader */
+    @keyframes l9 {
+      33%  {background-position:    0% 33% ,100% 33% ,200% 33% }
+      66%  {background-position: -100%  66%,0%   66% ,100% 66% }
+      100% {background-position:    0% 100%,100% 100%,200% 100%}
+    }
+</style>
 <section class="content">
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-dark text-white">
+                      <h3 class="card-title">Thêm lịch dạy hàng loạt</h3>
+                    </div>
+          
+                    <!-- CSV Upload Form -->
+                    <div class="card-body form-section">
+                      <form id="csvForm" action="{% url 'import_csv_teaching_schedule' %}" method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="form-group">
+                          <label for="csvFileInput" class="font-weight-bold d-block mb-3">
+                            Chọn file CSV (.csv):
+                            <a href="{% static 'files/Book_teaching schedule.csv' %}">Tải form mẫu</a>
+                          </label>
+                          <input type="file" class="form-control-file mb-3" id="csvFileInput" name="csv_file" accept=".csv" required />
+                          <button type="submit" class="btn btn-primary" id="csvSubmit">Xác nhận</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+
+                  <!-- Loader-->
+                <div id="loadingSpinner" class="loader-container">
+                  <div class="loader"></div>
+                </div>
+        
                 <!-- general form elements -->
                 <div class="card card-dark">
                     <div class="card-header">
@@ -23,5 +88,16 @@
         </div>
     </div>
 </section>
+<script>
+  window.onload = function() {
+    document.getElementById('loadingSpinner').style.display = 'none';
+  };
 
+  // hiển thị hiệu ứng loading
+  $(document).ready(function() {
+    $('#csvForm').submit(function(event) {
+      document.getElementById('loadingSpinner').style.display = 'flex';
+    });
+  });
+</script>
 {% endblock content %}

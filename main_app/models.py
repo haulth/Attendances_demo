@@ -117,7 +117,7 @@ class Subject(models.Model):
 class Student(models.Model):
     admin = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
     course = models.ForeignKey(Course, on_delete=models.CASCADE, null=True, blank=False)
-    session = models.ForeignKey(Subject, on_delete=models.CASCADE, null=True) #lớp học
+    session = models.ForeignKey(Subject, on_delete=models.CASCADE, null=True) # TÊN lớp học
 
     def __str__(self):
         return self.admin.last_name + " " + self.admin.first_name
