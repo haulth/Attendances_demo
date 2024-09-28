@@ -127,4 +127,5 @@ urlpatterns = [
     path("student/fcmtoken/", student_views.student_fcmtoken, name='student_fcmtoken'),
     path("student/view/notification/", student_views.student_view_notification, name="student_view_notification"),
     path('student/view/result/', student_views.student_view_result, name='student_view_result'),
+    path("check_email_availability", hod_views.check_email_availability, name="check_email_availability"),
 ]

@@ -1,12 +1,12 @@
 import json
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login, logout
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render, reverse
 from django.views.decorators.csrf import csrf_exempt
 
 from .EmailBackend import EmailBackend
-from .models import Attendance, Session, Subject, Course
+from .models import Attendance, Subject, Course, AttendanceReport
 
 # Create your views here.
 
@@ -67,25 +67,54 @@ def logout_user(request):
     return redirect("/")
 
 
+# @csrf_exempt
+# def get_attendance(request):
+#     subject_id = request.POST.get("subject") #lớp
+#     session_id = request.POST.get("session") #trường
+#     try:
+#         subject = get_object_or_404(Subject, id=subject_id)
+#         session = get_object_or_404(Course, id=session_id)
+#         attendance = Attendance.objects.filter(subject=subject, session=session)
+#         attendance_list = []
+#         for attd in attendance:
+#             data = {
+#                 "id": attd.id,
+#                 "attendance_date": str(attd.date),
+#                 "session": attd.session.id,
+#             }
+#             attendance_list.append(data)
+#         return JsonResponse(json.dumps(attendance_list), safe=False)
+#     except Exception as e:
+#         return None
+ 
 @csrf_exempt
 def get_attendance(request):
-    subject_id = request.POST.get("subject")
-    session_id = request.POST.get("session")
+    subject_id = request.POST.get("subject")  # lớp
+    session_id = request.POST.get("session")  # trường
     try:
         subject = get_object_or_404(Subject, id=subject_id)
         session = get_object_or_404(Course, id=session_id)
         attendance = Attendance.objects.filter(subject=subject, session=session)
+
         attendance_list = []
         for attd in attendance:
-            data = {
-                "id": attd.id,
-                "attendance_date": str(attd.date),
-                "session": attd.session.id,
-            }
-            attendance_list.append(data)
+            # Kiểm tra nếu có học sinh điểm danh 
+            has_students = AttendanceReport.objects.filter(attendance=attd).exists()
+
+            if has_students:
+                # Chỉ giữ lại những ngày có học sinh điểm danh
+                data = {
+                    "id": attd.id,
+                    "attendance_date": str(attd.date),
+                    "session": attd.session.id,
+                }
+                attendance_list.append(data)
+            else:
+                # Xóa bản ghi Attendance không có học sinh điểm danh
+                attd.delete()
+
         return JsonResponse(json.dumps(attendance_list), safe=False)
+    
     except Exception as e:
-        return None
-
-
+        return JsonResponse({'error': str(e)}, status=500)
 
