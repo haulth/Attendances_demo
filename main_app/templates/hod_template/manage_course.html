@@ -11,8 +11,12 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h3 class="card-title">{{page_title}}</h3>
-                        <!-- Trường tìm kiếm -->
-                        <div class="ml-auto">
+                        <div class="ml-auto d-flex align-items-center">
+                            <!-- Nút thêm trường kiểu như nút xóa -->
+                            {% url 'add_course' as add_course %}
+                            <a href="{{add_course}}" class="btn btn-primary d-flex align-items-center mr-2" style="white-space: nowrap;">
+                                <i class="fas fa-plus mr-2"></i> Thêm trường
+                            </a>
                             <input type="text" id="searchInput" class="form-control" placeholder="Tìm kiếm...">
                         </div>
                     </div>

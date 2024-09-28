@@ -202,7 +202,7 @@ def add_staff(request):
 
                 user.save()
                 messages.success(request, "Đã thêm thành công")
-                return redirect(reverse("add_staff"))
+                return redirect(reverse("manage_staff"))
 
             except Exception as e:
                 messages.error(request, "Could Not Add " + str(e))
@@ -214,7 +214,7 @@ def add_staff(request):
 
 
 def add_staff_csv(request):
-    context = {"page_title": "Thêm giáo viên hàng loạt"}
+    context = {"page_title": "Thêm nhiều giáo viên"}
 
     if request.method == "POST":
         excel_file = request.FILES.get("file")
@@ -298,8 +298,8 @@ def add_staff_csv(request):
                     messages.error(request, f"Không thể thêm giáo viên {email}: {str(e)}")
                     continue
 
-            messages.success(request, "Đã thêm giáo viên hàng loạt thành công.")
-            return redirect(reverse("add_staff"))
+            messages.success(request, "Đã thêm danh sách giáo viên thành công.")
+            return redirect(reverse("manage_staff"))
 
         except Exception as e:
             messages.error(request, f"Đã xảy ra lỗi khi xử lý file Excel: {str(e)}")
@@ -377,7 +377,7 @@ def add_student(request):
                 user.qr_code = os.path.join("QR", qr_image_name)
                 user.save()
                 messages.success(request, "Đã thêm thành công")
-                return redirect(reverse("add_student"))
+                return redirect(reverse("manage_student"))
             except Exception as e:
                 messages.error(request, "Could Not Add: " + str(e))
         else:
@@ -396,7 +396,7 @@ def add_course(request):
                 course.name = name
                 course.save()
                 messages.success(request, "Đã thêm thành công")
-                return redirect(reverse("add_course"))
+                return redirect(reverse("manage_course"))
             except:
                 messages.error(request, "Could Not Add")
         else:
@@ -419,7 +419,7 @@ def add_subject(request):
                 subject.course = course
                 subject.save()
                 messages.success(request, "Đã thêm thành công")
-                return redirect(reverse("add_subject"))
+                return redirect(reverse("manage_subject"))
 
             except Exception as e:
                 messages.error(request, "Could Not Add " + str(e))
@@ -680,7 +680,7 @@ def add_session(request):
             try:
                 form.save()
                 messages.success(request, "Tạo lịch dạy thành công")
-                return redirect(reverse("add_session"))
+                return redirect(reverse("manage_session"))
             except Exception as e:
                 messages.error(request, "Không thể thêm " + str(e))
         else:
@@ -1324,7 +1324,7 @@ def import_csv(request):
                 success_message_shown = True
         except Exception as e:
             messages.error(request, f"Đã có lỗi xảy ra: {str(e)}")
-        return redirect("add_student")
+        return redirect("manage_student")
     else:
         messages.error(request, "Yêu cầu không hợp lệ hoặc không có file.")
         return redirect("add_student")
@@ -1575,7 +1575,7 @@ def import_csv_teaching_schedule(request):
         if error_count > 0:
             messages.error(request, f"Có {error_count} lịch dạy không được thêm do lỗi.")
 
-        return redirect('add_session')  # Redirect to the same or another view
+        return redirect('manage_session')  # Redirect to the same or another view
 
     else:
         # If it's not a POST request or no file is uploaded, return an error

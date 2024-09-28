@@ -49,190 +49,56 @@
                 
 
 
-                <li class="nav-item has-treeview">
-                    <a href="#" class="nav-link">
+                <li class="nav-item">
+                    {% url 'manage_course' as manage_course %}
+                    <a href="{{manage_course}}" class="nav-link {% if manage_course == request.path %} active {% endif %}">
                         <i class="nav-icon fas fa-school"></i>
                         <p>
-                            Trường
-                            <i class="fas fa-angle-left right"></i>
+                            Quản lý trường
                         </p>
                     </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            {% url 'add_course' as add_course %}
-                            <a href="{{add_course}}"
-                                class="nav-link  {% if add_course == request.path %} active {% endif %}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>
-                                    Thêm trường
-
-                                </p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            {% url 'manage_course' as manage_course %}
-                            {% url 'edit_course' course_id as edit_course %}
-                            <a href="{{manage_course}}"
-                                class="nav-link  {% if edit_course == request.path or manage_course == request.path %} active {% endif %}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>
-                                    Quản lý trường
-                                </p>
-                            </a>
-                        </li>
-
-
-                    </ul>
                 </li>
-
-
-                <li class="nav-item has-treeview">
-                    <a href="#" class="nav-link">
+                <li class="nav-item">
+                    {% url 'manage_subject' as manage_subject %}
+                    <a href="{{manage_subject}}" class="nav-link {% if manage_subject == request.path %} active {% endif %}">
                         <i class="nav-icon fas fa-chalkboard-teacher"></i>
                         <p>
-                            Lớp
-                            <i class="fas fa-angle-left right"></i>
+                            Quản lý lớp học
                         </p>
                     </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            {% url 'add_subject' as add_subject %}
-                            <a href="{{add_subject}}"
-                                class="nav-link  {% if add_subject == request.path %} active {% endif %}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>
-                                    Thêm lớp
-
-                                </p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            {% url 'manage_subject' as manage_subject %}
-                            {% url 'edit_subject' subject_id as edit_subject %}
-                            <a href="{{manage_subject}}"
-                                class="nav-link  {% if edit_subject == request.path or manage_subject == request.path %} active {% endif %}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>
-                                    Quản lý lớp
-                                </p>
-                            </a>
-                        </li>
-
-                    </ul>
                 </li>
-
-
-
-
-
-                <li class="nav-item has-treeview">
-                    <a href="#" class="nav-link">
+                
+                <li class="nav-item">
+                    {% url 'manage_session' as manage_session %}
+                    <a href="{{manage_session}}" class="nav-link {% if manage_session == request.path %} active {% endif %}">
                         <i class="nav-icon fas fa-calendar-alt"></i>
                         <p>
-                            Lịch dạy
-                            <i class="fas fa-angle-left right"></i>
+                            Quản lý lịch dạy học
                         </p>
                     </a>
-                    <ul class="nav nav-treeview">
-
-                        <li class="nav-item">
-                            {% url 'add_session' as add_session %}
-                            <a href="{{add_session}}"
-                                class="nav-link  {% if add_session == request.path %} active {% endif %}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>
-                                    Thêm lịch dạy
-
-                                </p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            {% url 'manage_session' as manage_session %}
-                            {% url 'edit_session' session_id as edit_session %}
-                            <a href="{{manage_session}}"
-                                class="nav-link  {% if edit_session == request.path or manage_session == request.path %} active {% endif %}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>
-                                    Quản lý lịch dạy
-
-                                </p>
-                            </a>
-                        </li>
-
-                    </ul>
                 </li>
-
-                <li class="nav-item has-treeview">
-                    <a href="#" class="nav-link">
+                
+                <li class="nav-item">
+                    {% url 'manage_staff' as manage_staff %}
+                    <a href="{{manage_staff}}" class="nav-link {% if manage_staff == request.path %} active {% endif %}">
                         <i class="nav-icon fas fa-user-tie"></i>
                         <p>
-                            Giáo Viên
-                            <i class="fas fa-angle-left right"></i>
+                            Quản lý giáo viên
                         </p>
                     </a>
-                    <ul class="nav nav-treeview">
-
-                        <li class="nav-item">
-                            {% url 'add_staff' as add_staff %}
-                            <a href="{{add_staff}}"
-                                class="nav-link  {% if add_staff == request.path %} active {% endif %}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>
-                                    Thêm Giáo viên
-
-                                </p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            {% url 'manage_staff' as manage_staff %}
-                            {% url 'edit_staff' staff_id as edit_staff %}
-                            <a href="{{manage_staff}}"
-                                class="nav-link  {% if manage_staff == request.path or request.path == edit_staff %} active {% endif %}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>
-                                    Quản lý Giáo viên
-
-                                </p>
-                            </a>
-                        </li>
-
-                    </ul>
                 </li>
-                <li class="nav-item has-treeview">
-                    <a href="#" class="nav-link">
-                        <i class="nav-icon fas fa-user-graduate"></i>
-                        <p>
-                            Học Sinh
-                            <i class="fas fa-angle-left right"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
+                
 
-                        <li class="nav-item">
-                            {% url 'add_student' as add_student%}
-                            <a href="{{add_student}}" class="nav-link  {% if add_student == request.path %} active {% endif %}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>
-                                    Thêm Học sinh
-
-                                </p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            {% url 'manage_student' as manage_student %}
-                            {% url 'edit_student' student_id as edit_student %}
-                            <a href="{{manage_student}}"
-                        class="nav-link  {% if edit_student == request.path or manage_student == request.path %} active {% endif %}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>
-                                    Quản lý Học sinh
-
-                                </p>
-                            </a>
-                        </li>
-
-                    </ul>
-                </li>
+                    <li class="nav-item">
+                        {% url 'manage_student' as manage_student %}
+                        <a href="{{manage_student}}" class="nav-link {% if manage_student == request.path %} active {% endif %}">
+                            <i class="nav-icon fas fa-user-graduate"></i>
+                            <p>
+                                Quản lý học sinh
+                            </p>
+                        </a>
+                    </li>
+                    
 
                 {% comment %} <li class="nav-item">
                     {% url 'admin_notify_staff' as admin_notify_staff %}
