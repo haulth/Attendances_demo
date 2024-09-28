@@ -20,27 +20,27 @@
         <div class="card">
           <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
             <h3 class="card-title d-flex align-items-center flex-wrap">{{ page_title }}</h3>
-            <div class="ml-auto d-flex align-items-center flex-wrap" style="gap: 10px;">
-              {% url 'add_student' as add_student%}
-              <a href="{{add_student}}" class="btn btn-primary d-flex align-items-center" style="white-space: nowrap;">
-                  <i class="fas fa-plus mr-2"></i> Thêm Học Sinh
+            <div class="ml-auto d-flex flex-wrap align-items-center mt-2 mt-md-0" style="gap: 10px;">
+              <!-- Nút Thêm Học Sinh -->
+              {% url 'add_student' as add_student %}
+              <a href="{{add_student}}" class="btn btn-primary d-flex align-items-center mb-2 mb-md-0" style="white-space: nowrap;">
+                <i class="fas fa-plus mr-2"></i> Thêm Học Sinh
               </a>
-              <!-- Nút Xóa tất cả với icon thùng rác -->
-              <button id="deleteSelected" class="btn btn-danger d-flex align-items-center" style="white-space: nowrap;">
+              
+              <!-- Nút Xóa với icon thùng rác -->
+              <button id="deleteSelected" class="btn btn-danger d-flex align-items-center mb-2 mb-md-0" style="white-space: nowrap;">
                 <i class="fas fa-trash-alt mr-2"></i> Xóa
               </button>
+              
               <!-- Nút Xuất dữ liệu ra Excel -->
-              <button id="export_button" class="btn btn-success d-flex align-items-center" style="white-space: nowrap;">
+              <button id="export_button" class="btn btn-success d-flex align-items-center mb-2 mb-md-0" style="white-space: nowrap;">
                 <i class="fas fa-file-excel mr-2"></i> Xuất dữ liệu ra Excel
               </button>
-              
             </div>
+            
             <!-- Ô tìm kiếm -->
-            <input id="searchInput" type="text" class="form-control d-flex align-items-center flex-wrap" placeholder="Tìm kiếm..." style="max-width: 250px; margin-left: 10px; ">
+            <input id="searchInput" type="text" placeholder="Tìm kiếm..."  class="form-control" style="max-width: 250px; white-space: nowrap;">
           </div>
-         
-
-       
 
           <div id="loadingSpinner" class="loader-container">
             <div class="loader"></div>
