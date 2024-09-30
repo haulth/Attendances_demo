@@ -517,7 +517,8 @@ def edit_staff(request, staff_id):
             staff.save()
 
             messages.success(request, "Cập nhật thành công")
-            return redirect(reverse("edit_staff", args=[staff_id]))
+            # return redirect(reverse("staff_edit", args=[staff_id]))
+            return redirect(reverse("manage_staff"))
         except Exception as e:
             messages.error(request, "Không thể cập nhật: " + str(e))
     else:
@@ -610,7 +611,8 @@ def edit_student(request, student_id):
             student.save()
 
             messages.success(request, "Cập nhật thành công")
-            return redirect(reverse("edit_student", args=[student_id]))
+            # return redirect(reverse("edit_student", args=[student_id]))
+            return redirect(reverse("manage_student"))
         except Exception as e:
             messages.error(request, "Không thể cập nhật: " + str(e))
     else:
@@ -635,6 +637,8 @@ def edit_course(request, course_id):
                 course.name = name
                 course.save()
                 messages.success(request, "Cập nhật thành công")
+                # return redirect(reverse("course_edit", args=[course_id]))
+                return redirect(reverse("manage_course"))
             except:
                 messages.error(request, "Không thể cập nhật")
         else:
@@ -663,7 +667,8 @@ def edit_subject(request, subject_id):
                 subject.course = course
                 subject.save()
                 messages.success(request, "Cập nhật thành công")
-                return redirect(reverse("edit_subject", args=[subject_id]))
+                # return redirect(reverse("subject_edit", args=[subject_id]))
+                return redirect(reverse("manage_subject"))
             except Exception as e:
                 messages.error(request, "Không thể thêm" + str(e))
         else:
@@ -718,7 +723,8 @@ def edit_session(request, session_id):
             try:
                 form.save()
                 messages.success(request, "Cập nhật thành công")
-                return redirect(reverse("edit_session", args=[session_id]))
+                # return redirect(reverse("edit_session", args=[session_id]))
+                return redirect(reverse("manage_session"))
             except Exception as e:
                 messages.error(
                     request, "Hệ thống không thể cập nhật thông tin: " + str(e)

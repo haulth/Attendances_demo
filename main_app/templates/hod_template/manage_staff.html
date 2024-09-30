@@ -32,14 +32,14 @@
                       <i class="fas fa-plus mr-2"></i> Thêm Giáo Viên
                   </a>
           
-                  <!-- Nút xuất dữ liệu ra Excel -->
+                  <!-- Nút Xuất dữ liệu -->
                   <button id="export_button" class="btn btn-success d-flex align-items-center mb-2 mb-md-0" style="white-space: nowrap;">
-                      <i class="fas fa-file-excel mr-2"></i> Xuất dữ liệu ra Excel
+                      <i class="fas fa-file-excel mr-2"></i> Xuất dữ liệu
                   </button>
               </div>
           
               <!-- Ô tìm kiếm -->
-              <input type="text" id="searchInput" onkeyup="searchTable()" class="form-control" placeholder="Tìm kiếm..." style="max-width: 250px; white-space: nowrap;">
+              <input type="text" id="searchInput" onkeyup="searchTable()" class="form-control d-flex align-items-center mb-2 mb-md-0" placeholder="Tìm kiếm..." style="max-width: 250px; white-space: nowrap;">
           </div>
           
 
@@ -130,7 +130,7 @@
   }
 </script>
 
-<!-- Xuất dữ liệu ra Excel -->
+<!-- Xuất dữ liệu -->
 <script>
   document.getElementById('export_button').addEventListener('click', async function () {
     var workbook = new ExcelJS.Workbook();
