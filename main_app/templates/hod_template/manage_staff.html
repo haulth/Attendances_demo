@@ -10,32 +10,39 @@
   .table-responsive {
     overflow-x: auto;
   }
-  
+
 </style>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
   <section class="content">
     <div class="container-fluid">
       <div class="row">
         <div class="col-md-12">
           <div class="card">
 
-            <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-center">
-              <h3 class="card-title">{{ page_title }}</h3>
-              <!-- Căn chỉnh nút xuất và ô tìm kiếm sang bên phải -->
-              <div class="ml-auto d-flex flex-wrap align-items-center mt-2 mt-md-0">
-                <!-- Nút thêm giáo viên -->
-                {% url 'add_staff' as add_staff %}
-                <a href="{{add_staff}}" class="btn btn-primary d-flex align-items-center mr-2 mb-2 mb-md-0" style="white-space: nowrap;">
-                  <i class="fas fa-plus mr-2"></i> Thêm Giáo Viên
-                </a>
-                <!-- Nút xuất dữ liệu ra Excel -->
-                <button id="export_button" class="btn btn-success d-flex align-items-center mr-2 mb-2 mb-md-0" style="white-space: nowrap;">
-                  <i class="fas fa-file-excel"></i> Xuất dữ liệu ra Excel
-                </button> 
-                <!-- Ô tìm kiếm -->
-                <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Tìm kiếm..." class="form-control" style="max-width: 250px; white-space: nowrap;">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+              <!-- Tiêu đề -->
+              <h3 class="card-title d-flex align-items-center flex-wrap">{{ page_title }}</h3>
+          
+              <!-- Nút và ô tìm kiếm -->
+              <div class="ml-auto d-flex flex-wrap align-items-center mt-2 mt-md-0" style="gap: 10px;">
+                  <!-- Nút thêm giáo viên -->
+                  {% url 'add_staff' as add_staff %}
+                  <a href="{{add_staff}}" class="btn btn-primary d-flex align-items-center mb-2 mb-md-0" style="white-space: nowrap;">
+                      <i class="fas fa-plus mr-2"></i> Thêm Giáo Viên
+                  </a>
+          
+                  <!-- Nút xuất dữ liệu ra Excel -->
+                  <button id="export_button" class="btn btn-success d-flex align-items-center mb-2 mb-md-0" style="white-space: nowrap;">
+                      <i class="fas fa-file-excel mr-2"></i> Xuất dữ liệu ra Excel
+                  </button>
               </div>
-            </div>
-            
+          
+              <!-- Ô tìm kiếm -->
+              <input type="text" id="searchInput" onkeyup="searchTable()" class="form-control" placeholder="Tìm kiếm..." style="max-width: 250px; white-space: nowrap;">
+          </div>
+          
+
             <div class="card-body">
               <div class='table-responsive'>
                 <table id="example2" class="table table-bordered table-hover">

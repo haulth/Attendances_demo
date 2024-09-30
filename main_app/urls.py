@@ -116,6 +116,7 @@ urlpatterns = [
 
      # QR Code Scanner for Staff
      path('teacher/qr_code_scanner/', staff_views.qr_code_scanner, name='qr_code_scanner'),
+     path('complete_teaching_schedule/', staff_views.complete_teaching_schedule, name='complete_teaching_schedule'),
      path('teacher/get_subjects_by_session_teacher/', staff_views.get_subjects_by_session_staff, name='get_subjects_by_session_staff'),
 
      # Student-Specific Views
