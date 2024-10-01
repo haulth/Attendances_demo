@@ -113,6 +113,7 @@
             </div>
         </div>
     </div>
+
 </section>
 {% endblock content %}
 
@@ -231,7 +232,7 @@
             var session = $("#session").val();
             var start_date = $("#start_date").val();
             var end_date = $("#end_date").val();
-            //var attendance_type = $("#modeSwitch").prop("checked") ? "range" : "single";
+            var attendance_type = $("#modeSwitch").prop("checked") ? "range" : "single";
             //console.log('chế độ: ',attendance_type);
         
             $("#student_data").html("");
@@ -252,7 +253,7 @@
                     session: session,
                     start_date: start_date,
                     end_date: end_date,
-                    //attendance_type: attendance_type
+                    attendance_type: attendance_type
                 }
             }).done(function(response){
                 var json_data = JSON.parse(response);
@@ -320,34 +321,77 @@
                 if (response.length < 1) {
                     alert("Không có dữ liệu để hiển thị");
                 } else {
-                    // Tạo bảng để hiển thị dữ liệu, với lớp 'table-responsive' để tương thích với màn hình nhỏ
-                    var table_data = "<hr/><div class='table-responsive'><table class='table table-bordered'><thead><tr>";
-                    table_data += "<th>Họ và Tên</th><th>Ngày điểm danh</th><th>Lớp</th><th>Trường</th><th>Có mặt</th><th>Vắng mặt</th></tr></thead><tbody>";
-        
-                    for (var key in response) {
-                        var student = response[key];
-                        table_data += "<tr>";
-                        table_data += "<td>" + student['student_name'] + "</td>";
-                        table_data += "<td>" + student['attendance_date'] + "</td>";
-                        table_data += "<td>" + student['class_name'] + "</td>";
-                        table_data += "<td>" + student['school_name'] + "</td>";
-        
-                        if (student['status'] == true) {
-                            // "Có mặt" - hiển thị biểu tượng ✅ với nền xanh
-                            table_data += "<td><div style='color: #28a745; font-size: 20px;'>✅</div></td>";
-                            // Ô trống cho "Vắng mặt"
-                            table_data += "<td><div style='color: #f8f9fa; font-size: 20px;'></div></td>";
-                        } else {
-
-                            table_data += "<td><div style='color: #f8f9fa; font-size: 20px;'></div></td>";
-                            table_data += "<td><div style='color: #dc3545; font-size: 20px;'>❌</div></td>";
+                    // Group data by month and day
+                    var groupedByMonthAndDay = {};
+                    response.forEach(function (student) {
+                        var dateParts = student['attendance_date'].split('/');
+                        var day = dateParts[0];
+                        var month = dateParts[1];
+                        if (!groupedByMonthAndDay[month]) {
+                            groupedByMonthAndDay[month] = {};
                         }
+                        if (!groupedByMonthAndDay[month][day]) {
+                            groupedByMonthAndDay[month][day] = [];
+                        }
+                        groupedByMonthAndDay[month][day].push(student);
+                    });
+        
+                    var table_data = "<hr/><div class='table-responsive'><table class='table table-bordered'><thead><tr>";
+                    table_data += "<th>Họ và Tên</th>";
+        
+                    // Create headers for months and days
+                    for (var month in groupedByMonthAndDay) {
+                        var days = Object.keys(groupedByMonthAndDay[month]).length;
+                        table_data += "<th style='background-color:#CCFFFF;' colspan='" + days + "'>Tháng " + month + "</th>";
+                    }
+                    table_data += "</tr><tr><th></th>"; // Start a new row for the days
+        
+                    for (var month in groupedByMonthAndDay) {
+                        for (var day in groupedByMonthAndDay[month]) {
+                            table_data += "<th style='background-color:#CCCCCC; color:white;'>Ngày " + day + "</th>";
+                        }
+                    }
+                    table_data += "</tr></thead><tbody>";
+        
+                    // Loop through each student and display attendance
+                    var studentsByName = {};
+        
+                    response.forEach(function (student) {
+                        if (!studentsByName[student['student_name']]) {
+                            studentsByName[student['student_name']] = {};
+                        }
+                        var dateParts = student['attendance_date'].split('/');
+                        var day = dateParts[0];
+                        var month = dateParts[1];
+                        if (!studentsByName[student['student_name']][month]) {
+                            studentsByName[student['student_name']][month] = {};
+                        }
+                        studentsByName[student['student_name']][month][day] = student['status'];
+                    });
+        
+                    // Loop through all students and show their attendance
+                    for (var student_name in studentsByName) {
+                        table_data += "<tr>";
+                        table_data += "<td style='background-color:#FFFFCC;'>" + student_name + "</td>";
                         
-
+                        for (var month in groupedByMonthAndDay) {
+                            for (var day in groupedByMonthAndDay[month]) {
+                                if (studentsByName[student_name][month] && studentsByName[student_name][month][day] !== undefined) {
+                                    var status = studentsByName[student_name][month][day];
+                                    if (status === true) {
+                                        table_data += "<td><div style='color: #28a745; font-size: 20px;'>✓</div></td>";
+                                    } else if (status === false) {
+                                        table_data += "<td><div style='color: #dc3545; font-size: 20px;'>✕</div></td>";
+                                    }
+                                } else {
+                                    table_data += "<td></td>"; // Empty cell if no attendance record
+                                }
+                            }
+                        }
                         table_data += "</tr>";
                     }
         
-                    table_data += "</tbody></table></div>"; 
+                    table_data += "</tbody></table></div>";
                     $("#student_data").html(table_data);
         
                     $("#export_block").show();
@@ -358,8 +402,7 @@
             });
         });
         
-        
-        
+
         // Export attendance to Excel
         $(document).ready(function () {
             $("#export_attendance").click(function () {

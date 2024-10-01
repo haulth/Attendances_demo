@@ -1719,7 +1719,6 @@ import logging
 # xuất dữ liệu điểm danh ra file excel
 logger = logging.getLogger(__name__)
 
-
 def export_attendance(request):
     if request.method != "POST":
         return JsonResponse({"error": "Yêu cầu không hợp lệ"}, status=400)
@@ -1769,11 +1768,11 @@ def export_attendance(request):
         ).values_list("student", flat=True)
 
         # Absent students: Chỉ lấy học sinh thuộc lớp được chọn (session)
-        students_absent = Student.objects.filter(session_id=subject).exclude(
+        students_absent = Student.objects.filter(session_id=session).exclude(
             id__in=present_students
         )
 
-        # Data for present students
+        # Data for present students with specific attendance dates
         data = [
             {
                 "Tên học sinh": f"{report.student.admin.last_name} {report.student.admin.first_name}",
@@ -1786,27 +1785,22 @@ def export_attendance(request):
             for report in AttendanceReport.objects.filter(attendance=attendance)
         ]
 
-        # Data for absent students
-        absent_date_range = (
-            f"{format_date(start_date)} - {format_date(end_date)}"
-            if attendance_type == "range"
-            else format_date(attendance_date)
-        )
-
+        # Data for absent students, listing each date separately
         data1 = [
             {
                 "Tên học sinh": f"{student.admin.last_name} {student.admin.first_name}",
                 "Mã học sinh": student.admin.student_id,
                 "Lớp": Subject.objects.get(id=student.session_id).name,
-                "Ngày điểm danh": absent_date_range,
+                "Ngày điểm danh": format_date(attendance.date.strftime("%Y-%m-%d")),
                 "Trạng thái": "Chưa điểm danh",
             }
             for student in students_absent
+            for attendance in attendance_records
         ]
 
-        # Combine data and remove duplicates based on 'Mã học sinh'
+        # Combine data and remove duplicates based on 'Mã học sinh' and 'Ngày điểm danh'
         combined_data = data + data1
-        df = pd.DataFrame(combined_data).drop_duplicates(subset=["Mã học sinh"])
+        df = pd.DataFrame(combined_data).drop_duplicates(subset=["Mã học sinh", "Ngày điểm danh"])
 
         # Creating Excel file
         output = io.BytesIO()
@@ -1818,15 +1812,12 @@ def export_attendance(request):
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
         response["Content-Disposition"] = "attachment; filename=attendance.xlsx"
-        logger.info("Excel file successfully created and returned.")
         return response
 
     except ValueError as e:
-        logger.error(f"Date format error: {e}")
         return JsonResponse({"error": "Định dạng ngày không hợp lệ"}, status=400)
 
     except Exception as e:
-        logger.error(f"Unhandled exception: {e}")
         return JsonResponse({"error": str(e)}, status=500)
 
 
