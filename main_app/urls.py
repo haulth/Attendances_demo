@@ -60,6 +60,7 @@ urlpatterns = [
      # Session Management
      path("schedule/add", hod_views.add_session, name='add_session'),
      path("schedule/manage/", hod_views.manage_session, name='manage_session'),
+     path("delete_schedules/", hod_views.delete_schedules, name='delete_schedules'),
      path("schedule/edit/<int:session_id>", hod_views.edit_session, name='edit_session'),
      path("schedule/delete/<int:session_id>", hod_views.delete_session, name='delete_session'),
 

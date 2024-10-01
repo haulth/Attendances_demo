@@ -17,6 +17,7 @@
   <section class="content">
     <div class="container-fluid">
       <div class="row">
+
         <div class="col-md-12">
           <div class="card">
 
@@ -32,61 +33,102 @@
                       <i class="fas fa-plus mr-2"></i> Thêm Giáo Viên
                   </a>
           
-                  <!-- Nút Xuất dữ liệu -->
+                  <!-- Nút xuất dữ liệu ra Excel -->
                   <button id="export_button" class="btn btn-success d-flex align-items-center mb-2 mb-md-0" style="white-space: nowrap;">
-                      <i class="fas fa-file-excel mr-2"></i> Xuất dữ liệu
+                      <i class="fas fa-file-excel mr-2"></i> Xuất dữ liệu ra Excel
                   </button>
               </div>
           
               <!-- Ô tìm kiếm -->
-              <input type="text" id="searchInput" onkeyup="searchTable()" class="form-control d-flex align-items-center mb-2 mb-md-0" placeholder="Tìm kiếm..." style="max-width: 250px; white-space: nowrap;">
+              <input type="text" id="searchInput" onkeyup="searchTable()" class="form-control " placeholder="Tìm kiếm..." style="max-width: 250px; white-space: nowrap; margin-left: 10px;">
           </div>
           
-
-            <div class="card-body">
-              <div class='table-responsive'>
-                <table id="example2" class="table table-bordered table-hover">
-                  <thead class="thead-dark">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table id="example2" class="table table-bordered table-hover">
+                <thead class="thead-dark">
+                  <tr>
+                    <th>#</th>
+                    <th>Tên giáo viên</th>
+                    <th>Email</th>
+                    <th>Giới tính</th>
+                    <th>Ảnh đại diện</th>
+                    <th>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for staff in page_obj %}
                     <tr>
-                      <th>#</th>
-                      <th>Tên giáo viên</th>
-                      <th>Email</th>
-                      <th>Giới tính</th>
-                      <th>Ảnh đại diện</th>
-                      <th>Hành động</th>
+                      <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
+                      <td>{{ staff.last_name }} {{ staff.first_name }}</td>
+                      <td>{{ staff.email }}</td>
+                      <td>
+                        {% if staff.gender == 'M' %}
+                          Nam
+                        {% elif staff.gender == 'F' %}
+                          Nữ
+                        {% else %} 
+                          Không xác định
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if staff.profile_pic == '' %}
+                          Không có ảnh
+                        {% else %}
+                          <img class="img img-fluid mb-2" height="56" width="56" src="{{ staff.profile_pic }}" alt="" />
+                        {% endif %}
+                      </td>
+                      <td>
+                        <a href="{% url 'edit_staff' staff.staff.id %}" class="btn btn-info">Chỉnh sửa</a> - 
+                        <a href="{% url 'delete_staff' staff.staff.id %}" class="btn btn-danger" onclick="return confirm('Bạn có chắc chắn về điều này không?')">Xóa</a>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {% for staff in allStaff %}
-                      <tr>
-                        <td>{{ forloop.counter }}</td>
-                        <td>{{ staff.last_name }} {{ staff.first_name }}</td>
-                        <td>{{ staff.email }}</td>
-                        <td>
-                          {% if staff.gender == 'M' %}
-                            Nam
-                          {% elif staff.gender == 'F' %}
-                            Nữ
-                          {% else %} 
-                            Không xác định
-                          {% endif %}
-                        </td>
-                        <td>
-                          {% if staff.profile_pic == '' %}
-                            Không có ảnh
-                          {% else %}
-                            <img class="img img-fluid mb-2" height="56" width="56" src="{{ staff.profile_pic }}" alt="" />
-                          {% endif %}
-                        </td>
-                        <td>
-                          <a href="{% url 'edit_staff' staff.staff.id %}" class="btn btn-info">Chỉnh sửa</a> - 
-                          <a href="{% url 'delete_staff' staff.staff.id %}" class="btn btn-danger" onclick="return confirm('Bạn có chắc chắn về điều này không?')">Xóa</a>
-                        </td>
-                      </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          
+            <!-- Phần phân trang -->
+            <nav aria-label="Page navigation example">
+              <ul class="pagination justify-content-start">
+                {% if page_obj.has_previous %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page=1" aria-label="First">
+                      <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                  </li>
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                      <span aria-hidden="true">&laquo;</span>
+                    </a>
+                  </li>
+                {% endif %}
+          
+                <!-- Hiển thị các số trang -->
+                {% for num in page_obj.paginator.page_range %}
+                  {% if page_obj.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                  {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                  {% endif %}
+                {% endfor %}
+          
+                {% if page_obj.has_next %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                      <span aria-hidden="true">&raquo;</span>
+                    </a>
+                  </li>
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                      <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                  </li>
+                {% endif %}
+              </ul>
+            </nav>
+          </div>
+          
               
             </div>
           </div>
@@ -130,7 +172,7 @@
   }
 </script>
 
-<!-- Xuất dữ liệu -->
+<!-- Xuất dữ liệu ra Excel -->
 <script>
   document.getElementById('export_button').addEventListener('click', async function () {
     var workbook = new ExcelJS.Workbook();

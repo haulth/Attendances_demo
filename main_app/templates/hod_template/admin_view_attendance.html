@@ -98,7 +98,7 @@
                             </div>
 
                             <div class="form-group" id="export_block" style="display: none;">
-                                <button type="button" id="export_attendance" class="btn btn-primary btn-block">Xuất dữ liệu</button>
+                                <button type="button" id="export_attendance" class="btn btn-primary btn-block">Xuất dữ liệu ra Excel</button>
                             </div>
 
                             <div class="form-group" id="delete_block" style="display: none;">
@@ -292,24 +292,23 @@
     
         $("#fetch_student").click(function () {
             var attendance_date = $("#attendance_date").val();
-            console.log('ID ngày lấy dữ liệu: ',attendance_date);
             var session = $("#session").val();
             var subject = $("#subject").val();
             var start_date = $("#start_date").val();
             var end_date = $("#end_date").val();
-            
+        
             $("#student_data").html(null);
-            
+        
             if (attendance_date.length == 0 && (start_date.length == 0 || end_date.length == 0)) {
                 alert("Vui lòng chọn một ngày hoặc một khoảng thời gian");
                 return false;
             }
-            
+        
             $.ajax({
                 url: "{% url 'get_admin_attendance' %}",
                 type: 'POST',
                 headers: { "X-CSRFToken": csrftoken },
-                dataType: 'json',  // Đảm bảo dữ liệu trả về là JSON
+                dataType: 'json',
                 data: {
                     attendance_date_id: attendance_date,
                     session: session,
@@ -318,27 +317,48 @@
                     end_date: end_date
                 }
             }).done(function (response) {
-                // Dữ liệu trả về đã là JSON, không cần JSON.parse
                 if (response.length < 1) {
                     alert("Không có dữ liệu để hiển thị");
                 } else {
-                    var div_data = "<hr/><div class='form-group'></div><div class='form-group'><label>Học sinh có mặt</label><div class='row'>";
-                    for (key in response) {
-                        if (response[key]['status'] == true) {
-                            div_data += "<div class='col-lg-3 attendance_div_green'><b>" + response[key]['student_name'] + "</b><br/>Có mặt</div>";
+                    // Tạo bảng để hiển thị dữ liệu, với lớp 'table-responsive' để tương thích với màn hình nhỏ
+                    var table_data = "<hr/><div class='table-responsive'><table class='table table-bordered'><thead><tr>";
+                    table_data += "<th>Họ và Tên</th><th>Ngày điểm danh</th><th>Lớp</th><th>Trường</th><th>Có mặt</th><th>Vắng mặt</th></tr></thead><tbody>";
+        
+                    for (var key in response) {
+                        var student = response[key];
+                        table_data += "<tr>";
+                        table_data += "<td>" + student['student_name'] + "</td>";
+                        table_data += "<td>" + student['attendance_date'] + "</td>";
+                        table_data += "<td>" + student['class_name'] + "</td>";
+                        table_data += "<td>" + student['school_name'] + "</td>";
+        
+                        if (student['status'] == true) {
+                            // "Có mặt" - hiển thị biểu tượng ✅ với nền xanh
+                            table_data += "<td><div style='color: #28a745; font-size: 20px;'>✅</div></td>";
+                            // Ô trống cho "Vắng mặt"
+                            table_data += "<td><div style='color: #f8f9fa; font-size: 20px;'></div></td>";
                         } else {
-                            div_data += "<div class='col-lg-3 attendance_div_red'><b>" + response[key]['student_name'] + "</b><br/>Vắng mặt</div>";
+
+                            table_data += "<td><div style='color: #f8f9fa; font-size: 20px;'></div></td>";
+                            table_data += "<td><div style='color: #dc3545; font-size: 20px;'>❌</div></td>";
                         }
+                        
+
+                        table_data += "</tr>";
                     }
-                    div_data += "</div></div>";
-                    $("#student_data").html(div_data);
-                    $("#export_block").show();  
+        
+                    table_data += "</tbody></table></div>"; 
+                    $("#student_data").html(table_data);
+        
+                    $("#export_block").show();
                     $("#delete_block").show();
                 }
             }).fail(function () {
                 alert("Lỗi khi tìm học sinh");
             });
         });
+        
+        
         
         // Export attendance to Excel
         $(document).ready(function () {

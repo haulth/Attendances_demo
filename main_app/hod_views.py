@@ -1,13 +1,11 @@
-import io
-import re
-import shutil
-from openpyxl import load_workbook
+
+from openpyxl import load_workbook, Workbook
 import pandas as pd
-import json, os, csv
-import requests
+import json, os, csv, requests, shutil, re, io
 from django.contrib import messages
 from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse, JsonResponse
+from django.core.mail import send_mail, EmailMessage
 from django.shortcuts import (
     HttpResponse,
     get_object_or_404,
@@ -22,11 +20,10 @@ from .models import *
 import qrcode
 from io import BytesIO
 from django.conf import settings
-from django.contrib import messages
 from datetime import datetime
-from django.db.models import Count
 from django.utils import timezone
 import pytz
+
 
 def admin_home(request):
     total_staff = Staff.objects.count()
@@ -38,20 +35,20 @@ def admin_home(request):
     courses = Course.objects.all()
 
     # Lấy ngày hôm nay
-    vn_tz = pytz.timezone('Asia/Ho_Chi_Minh')
+    vn_tz = pytz.timezone("Asia/Ho_Chi_Minh")
     selected_date = timezone.now().astimezone(vn_tz).date()
-    
-    print(f'ngày được chọn: {selected_date}')
+
+    print(f"ngày được chọn: {selected_date}")
 
     # Dữ liệu danh sách tên các lớp và số học sinh điểm danh hôm nay
     subject_list = []
     student_present_today_list = []
     student_absent_today_list = []  # Danh sách số học sinh vắng mặt theo lớp
     course_student_counts = {}
-    
+
     for course in courses:
         course_name = course.name  # Lấy tên khóa học
-        # Khởi tạo 
+        # Khởi tạo
         if course_name not in course_student_counts:
             course_student_counts[course_name] = {}
 
@@ -59,8 +56,10 @@ def admin_home(request):
         subjects_in_course = Subject.objects.filter(course=course)
 
         for subject in subjects_in_course:
-            # Lấy số lượng học sinh trong lớp 
-            total_students_in_subject = Student.objects.filter(course=course, session=subject).count()
+            # Lấy số lượng học sinh trong lớp
+            total_students_in_subject = Student.objects.filter(
+                course=course, session=subject
+            ).count()
 
             # Lưu số học sinh cho từng lớp
             course_student_counts[course_name][subject.name] = total_students_in_subject
@@ -71,20 +70,17 @@ def admin_home(request):
 
         # Lấy tất cả các bản ghi điểm danh trong lớp theo ngày đã chọn
         attendances = Attendance.objects.filter(
-            subject=subject, 
-            date=selected_date  # Sử dụng ngày được chọn
+            subject=subject, date=selected_date  # Sử dụng ngày được chọn
         )
 
         # Số học sinh có mặt trong lớp vào ngày được chọn
         present_count = AttendanceReport.objects.filter(
-            attendance__in=attendances,
-            status=True  # Học sinh có mặt
+            attendance__in=attendances, status=True  # Học sinh có mặt
         ).count()
 
         # Số học sinh vắng mặt trong lớp vào ngày được chọn
         absent_count = AttendanceReport.objects.filter(
-            attendance__in=attendances,
-            status=False  # Học sinh vắng mặt
+            attendance__in=attendances, status=False  # Học sinh vắng mặt
         ).count()
 
         # Thêm số lượng học sinh đã điểm danh và vắng mặt vào danh sách
@@ -92,9 +88,12 @@ def admin_home(request):
         student_absent_today_list.append(absent_count)
 
     # Lấy số lớp học có lịch trong ngày được chọn
-    classes_with_schedule_today = TeachingSchedule.objects.filter(
-        schedule_date=selected_date 
-    ).values('class_name').distinct().count()
+    classes_with_schedule_today = (
+        TeachingSchedule.objects.filter(schedule_date=selected_date)
+        .values("class_name")
+        .distinct()
+        .count()
+    )
 
     total_classes = subjects.count()
 
@@ -111,15 +110,14 @@ def admin_home(request):
         "total_classes": total_classes,
         "classes_with_schedule_today": classes_with_schedule_today,  # Số lớp có lịch học hôm nay
         "course_student_counts": json.dumps(course_student_counts),
-       
     }
     print(context)
     return render(request, "hod_template/home_content.html", context)
 
 
 def filter_data_by_date(request):
-    selected_date = request.GET.get('date', timezone.now().date())  
-    print(f'ngày được họn: {selected_date}')
+    selected_date = request.GET.get("date", timezone.now().date())
+    print(f"ngày được họn: {selected_date}")
 
     # Lọc dữ liệu học sinh điểm danh theo ngày đã chọn
     subjects = Subject.objects.all()
@@ -129,31 +127,29 @@ def filter_data_by_date(request):
 
     for subject in subjects:
         # Lấy tất cả các bản ghi điểm danh trong lớp theo ngày
-        attendances = Attendance.objects.filter(
-            subject=subject, 
-            date=selected_date
-        )
-        print(f'bản ghi điểm danh trong lớp theo ngày: {attendances}')
+        attendances = Attendance.objects.filter(subject=subject, date=selected_date)
+        print(f"bản ghi điểm danh trong lớp theo ngày: {attendances}")
 
         # Số học sinh có mặt trong lớp vào ngày được chọn
         present_count = AttendanceReport.objects.filter(
-            attendance__in=attendances,
-            status=True  # Học sinh có mặt
+            attendance__in=attendances, status=True  # Học sinh có mặt
         ).count()
 
         # Số học sinh vắng mặt trong lớp vào ngày được chọn
         absent_count = AttendanceReport.objects.filter(
-            attendance__in=attendances,
-            status=False  # Học sinh vắng mặt
+            attendance__in=attendances, status=False  # Học sinh vắng mặt
         ).count()
 
         student_present_today_list.append(present_count)
         student_absent_today_list.append(absent_count)
 
     # Lấy số lớp học có lịch hôm nay
-    classes_with_schedule_today = TeachingSchedule.objects.filter(
-        schedule_date=selected_date
-    ).values('class_name').distinct().count()
+    classes_with_schedule_today = (
+        TeachingSchedule.objects.filter(schedule_date=selected_date)
+        .values("class_name")
+        .distinct()
+        .count()
+    )
 
     total_classes = subjects.count()
 
@@ -161,12 +157,14 @@ def filter_data_by_date(request):
     student_present_today_list = list(map(int, student_present_today_list))
     student_absent_today_list = list(map(int, student_absent_today_list))
 
-    return JsonResponse({
-        'student_present_today_list': student_present_today_list,
-        'student_absent_today_list': student_absent_today_list,
-        'classes_with_schedule_today': classes_with_schedule_today,
-        'total_classes': total_classes,
-    })
+    return JsonResponse(
+        {
+            "student_present_today_list": student_present_today_list,
+            "student_absent_today_list": student_absent_today_list,
+            "classes_with_schedule_today": classes_with_schedule_today,
+            "total_classes": total_classes,
+        }
+    )
 
 
 def add_staff(request):
@@ -212,7 +210,6 @@ def add_staff(request):
     return render(request, "hod_template/add_staff_template.html", context)
 
 
-
 def add_staff_csv(request):
     context = {"page_title": "Thêm nhiều giáo viên"}
 
@@ -226,7 +223,10 @@ def add_staff_csv(request):
 
         # Kiểm tra định dạng file
         if not excel_file.name.endswith(".xlsx"):
-            messages.error(request, "Định dạng file không hợp lệ. Vui lòng tải lên file Excel (.xlsx).")
+            messages.error(
+                request,
+                "Định dạng file không hợp lệ. Vui lòng tải lên file Excel (.xlsx).",
+            )
             return redirect(reverse("add_staff"))
 
         try:
@@ -235,31 +235,45 @@ def add_staff_csv(request):
             ws = wb.active  # Lấy sheet đầu tiên
 
             # Kiểm tra số cột trong file Excel
-            expected_columns = ['ho', 'ten', 'dia_chi', 'email', 'gioi_tinh', 'mat_khau']
+            expected_columns = [
+                "ho",
+                "ten",
+                "dia_chi",
+                "email",
+                "gioi_tinh",
+                "mat_khau",
+            ]
             header = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
             if header != expected_columns:
-                messages.error(request, "Định dạng file không đúng. Vui lòng đảm bảo file có các cột: ho, ten, dia_chi, email, gioi_tinh, mat_khau.")
+                messages.error(
+                    request,
+                    "Định dạng file không đúng. Vui lòng đảm bảo file có các cột: ho, ten, dia_chi, email, gioi_tinh, mat_khau.",
+                )
                 return redirect(reverse("add_staff"))
 
             # Đường dẫn đến ảnh mặc định
-            default_image_path = os.path.join(settings.MEDIA_ROOT, 'image_default', 'bdulogo.jpg')
-            media_image_path = os.path.join(settings.MEDIA_ROOT, 'profile_pics')
+            default_image_path = os.path.join(
+                settings.MEDIA_ROOT, "image_default", "bdulogo.jpg"
+            )
+            media_image_path = os.path.join(settings.MEDIA_ROOT, "profile_pics")
 
             # Tạo thư mục chứa ảnh đại diện nếu chưa tồn tại
             if not os.path.exists(media_image_path):
                 os.makedirs(media_image_path)
 
             # Copy ảnh mặc định ra ngoài thư mục media/profile_pics nếu chưa có
-            default_profile_pic = os.path.join(media_image_path, 'bdulogo.jpg')
+            default_profile_pic = os.path.join(media_image_path, "bdulogo.jpg")
             if not os.path.exists(default_profile_pic):
                 try:
                     shutil.copy(default_image_path, default_profile_pic)
                 except Exception as e:
-                    messages.error(request, f"Không thể sao chép ảnh đại diện mặc định: {str(e)}")
+                    messages.error(
+                        request, f"Không thể sao chép ảnh đại diện mặc định: {str(e)}"
+                    )
                     return redirect(reverse("add_staff"))
 
             # Lặp qua từng dòng trong Excel
-            for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True)):  
+            for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True)):
                 ho = row[0]  # Họ
                 ten = row[1]  # Tên
                 dia_chi = row[2]  # Địa chỉ
@@ -269,12 +283,17 @@ def add_staff_csv(request):
 
                 # Kiểm tra nếu dữ liệu dòng có vấn đề
                 if not all([ho, ten, dia_chi, email, gioi_tinh, mat_khau]):
-                    messages.error(request, f"Dữ liệu dòng {idx + 2} không hợp lệ. Vui lòng kiểm tra.")
+                    messages.error(
+                        request,
+                        f"Dữ liệu dòng {idx + 2} không hợp lệ. Vui lòng kiểm tra.",
+                    )
                     continue
 
                 # Kiểm tra định dạng email
                 if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-                    messages.error(request, f"Định dạng email không hợp lệ ở dòng {idx + 2}.")
+                    messages.error(
+                        request, f"Định dạng email không hợp lệ ở dòng {idx + 2}."
+                    )
                     continue
 
                 # Đặt ảnh đại diện mặc định
@@ -295,7 +314,9 @@ def add_staff_csv(request):
                     user.save()
 
                 except Exception as e:
-                    messages.error(request, f"Không thể thêm giáo viên {email}: {str(e)}")
+                    messages.error(
+                        request, f"Không thể thêm giáo viên {email}: {str(e)}"
+                    )
                     continue
 
             messages.success(request, "Đã thêm danh sách giáo viên thành công.")
@@ -306,6 +327,7 @@ def add_staff_csv(request):
             return redirect(reverse("add_staff"))
 
     return render(request, "hod_template/add_staff_template.html", context)
+
 
 def add_student(request):
     student_form = StudentForm(
@@ -321,11 +343,11 @@ def add_student(request):
             student_id = student_form.cleaned_data.get("student_id")
 
             # Kiểm tra xem student_id có phải là số hay không
-            if not student_id.isdigit():
-                messages.error(request, "Mã học sinh phải là số")
-                return render(
-                    request, "hod_template/add_student_template.html", context
-                )
+            # if not student_id.isdigit():
+            #     messages.error(request, "Mã học sinh phải là số")
+            #     return render(
+            #         request, "hod_template/add_student_template.html", context
+            #     )
 
             # Các dữ liệu khác sau khi kiểm tra student_id
             first_name = student_form.cleaned_data.get("first_name")
@@ -431,7 +453,10 @@ def add_subject(request):
 
 def manage_staff(request):
     allStaff = CustomUser.objects.filter(user_type=2)
-    context = {"allStaff": allStaff, "page_title": "Quản lý giáo viên"}
+    paginator = Paginator(allStaff, 10)  # Mỗi trang có 10 lịch dạy
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    context = {"allStaff": allStaff,"page_obj": page_obj,  "page_title": "Quản lý giáo viên"}
     return render(request, "hod_template/manage_staff.html", context)
 
 
@@ -517,8 +542,7 @@ def edit_staff(request, staff_id):
             staff.save()
 
             messages.success(request, "Cập nhật thành công")
-            # return redirect(reverse("staff_edit", args=[staff_id]))
-            return redirect(reverse("manage_staff"))
+            return redirect(reverse("edit_staff", args=[staff_id]))
         except Exception as e:
             messages.error(request, "Không thể cập nhật: " + str(e))
     else:
@@ -611,8 +635,7 @@ def edit_student(request, student_id):
             student.save()
 
             messages.success(request, "Cập nhật thành công")
-            # return redirect(reverse("edit_student", args=[student_id]))
-            return redirect(reverse("manage_student"))
+            return redirect(reverse("edit_student", args=[student_id]))
         except Exception as e:
             messages.error(request, "Không thể cập nhật: " + str(e))
     else:
@@ -637,8 +660,6 @@ def edit_course(request, course_id):
                 course.name = name
                 course.save()
                 messages.success(request, "Cập nhật thành công")
-                # return redirect(reverse("course_edit", args=[course_id]))
-                return redirect(reverse("manage_course"))
             except:
                 messages.error(request, "Không thể cập nhật")
         else:
@@ -667,8 +688,7 @@ def edit_subject(request, subject_id):
                 subject.course = course
                 subject.save()
                 messages.success(request, "Cập nhật thành công")
-                # return redirect(reverse("subject_edit", args=[subject_id]))
-                return redirect(reverse("manage_subject"))
+                return redirect(reverse("edit_subject", args=[subject_id]))
             except Exception as e:
                 messages.error(request, "Không thể thêm" + str(e))
         else:
@@ -677,19 +697,51 @@ def edit_subject(request, subject_id):
 
 
 def add_session(request):
-    form = TeachingScheduleForm(request.POST or None)
-    context = {"form": form, "page_title": "Thêm lịch dạy"}
-
     if request.method == "POST":
+        form = TeachingScheduleForm(request.POST)
         if form.is_valid():
             try:
-                form.save()
-                messages.success(request, "Tạo lịch dạy thành công")
+                teaching_schedule = form.save()
+
+                # Lấy thông tin email một lần, tránh gọi nhiều lần
+                admin = teaching_schedule.staff.admin
+                teacher_email = admin.email
+                subject = "Thông báo lịch dạy mới"
+                message = (
+                    f"Xin chào Thầy/Cô {admin.last_name} {admin.first_name},\n\n"
+                    f"Quý Thầy/Cô vừa được phân công lịch giảng dạy mới với thông tin chi tiết như sau:\n"
+                    f"- Ngày giảng dạy: {teaching_schedule.schedule_date.strftime('%d/%m/%Y')}\n"
+                    f"- Thời gian: {teaching_schedule.start_time.strftime('%H:%M')}\n"
+                    f"- Lớp học: {teaching_schedule.class_name}\n"
+                    f"- Trường: {teaching_schedule.school_name}\n\n"
+                    "Kính mong Quý Thầy/Cô sắp xếp thời gian và chuẩn bị đầy đủ tài liệu để buổi giảng dạy diễn ra thành công.\n\n"
+                    "Trân trọng cảm ơn."
+                )
+
+                # Gửi email
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [teacher_email],
+                    fail_silently=False,
+                )
+
+                # Hiển thị thông báo thành công
+                messages.success(
+                    request,
+                    f"Tạo lịch dạy thành công và thông báo đã được gửi gmail của giáo viên {admin.last_name} {admin.first_name}",
+                )
                 return redirect(reverse("manage_session"))
+
             except Exception as e:
-                messages.error(request, "Không thể thêm " + str(e))
+                messages.error(request, f"Không thể thêm lịch dạy: {e}")
         else:
-            messages.error(request, "Điền biểu mẫu đúng cách ")
+            messages.error(request, "Điền biểu mẫu đúng cách")
+    else:
+        form = TeachingScheduleForm()
+
+    context = {"form": form, "page_title": "Thêm lịch dạy"}
     return render(request, "hod_template/add_session_template.html", context)
 
 
@@ -707,8 +759,27 @@ def load_classes_student(request):
 
 def manage_session(request):
     sessions = TeachingSchedule.objects.all()
-    context = {"sessions": sessions, "page_title": "Quản lý lịch dạy"}
+    paginator = Paginator(sessions, 10)  # Mỗi trang có 10 lịch dạy
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    context = {"sessions": sessions,'page_obj': page_obj, "page_title": "Quản lý lịch dạy"}
     return render(request, "hod_template/manage_session.html", context)
+
+def delete_schedules(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)  # Lấy danh sách IDs từ yêu cầu JSON
+            ids = data.get('ids', [])
+
+            if ids and all(ids):  # Kiểm tra xem danh sách IDs có giá trị
+                TeachingSchedule.objects.filter(id__in=ids).delete()  # Xóa các lịch dạy tương ứng
+                messages.success(request, "Xóa thành công lịch dạy đã chọn.")
+                return JsonResponse({'status': 'success'}, status=200)
+            else:
+                return JsonResponse({'status': 'error', 'message': 'No valid IDs provided'}, status=400)
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'error', 'message': 'Invalid JSON format'}, status=400)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
 
 def edit_session(request, session_id):
@@ -721,16 +792,43 @@ def edit_session(request, session_id):
         )  # Initialize form with POST data and instance
         if form.is_valid():
             try:
-                form.save()
-                messages.success(request, "Cập nhật thành công")
-                # return redirect(reverse("edit_session", args=[session_id]))
-                return redirect(reverse("manage_session"))
+                updated_teaching_schedule = form.save()
+
+                # Send email notification to the teacher
+                admin = updated_teaching_schedule.staff.admin
+                teacher_email = admin.email
+                subject = "Thông báo cập nhật lịch dạy"
+                message = (
+                    f"Xin chào Thầy/Cô {admin.last_name} {admin.first_name},\n\n"
+                    f"Quý Thầy/Cô vừa được cập nhật lịch giảng dạy với thông tin chi tiết như sau:\n"
+                    f"- Ngày giảng dạy: {updated_teaching_schedule.schedule_date.strftime('%d/%m/%Y')}\n"
+                    f"- Thời gian: {updated_teaching_schedule.start_time.strftime('%H:%M')}\n"
+                    f"- Lớp học: {updated_teaching_schedule.class_name}\n"
+                    f"- Trường: {updated_teaching_schedule.school_name}\n\n"
+                    "Kính mong Quý Thầy/Cô kiểm tra lại lịch dạy và có những chuẩn bị cần thiết để buổi giảng dạy diễn ra thành công.\n\n"
+                    "Trân trọng cảm ơn."
+                )
+
+                # Gửi email
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [teacher_email],
+                    fail_silently=False,
+                )
+
+                messages.success(
+                    request,
+                    f"Cập nhật thành công lịch dạy và thông báo đã được gửi đến gamil của giáo viên {admin.last_name} {admin.first_name}.",
+                )
+                return redirect(reverse("edit_session", args=[session_id]))
             except Exception as e:
                 messages.error(
                     request, "Hệ thống không thể cập nhật thông tin: " + str(e)
                 )
         else:
-            messages.error(request, "Đã gửi biểu mẫu không hợp lệ ")
+            messages.error(request, "Đã gửi biểu mẫu không hợp lệ")
     else:
         form = TeachingScheduleForm(instance=instance)  # Initialize form with instance
 
@@ -868,7 +966,6 @@ def get_admin_attendance(request):
     start_date = request.POST.get("start_date")
     end_date = request.POST.get("end_date")
 
-    # Chuyển đổi định dạng ngày nếu cần
     if start_date:
         try:
             if "/" in start_date:
@@ -876,7 +973,6 @@ def get_admin_attendance(request):
                     "%Y-%m-%d"
                 )
         except ValueError as e:
-            logger.error(f"Start date format error: {e}")
             return JsonResponse(
                 {"error": "Định dạng ngày bắt đầu không hợp lệ"}, status=400
             )
@@ -886,7 +982,6 @@ def get_admin_attendance(request):
             if "/" in end_date:
                 end_date = datetime.strptime(end_date, "%d/%m/%Y").strftime("%Y-%m-%d")
         except ValueError as e:
-            logger.error(f"End date format error: {e}")
             return JsonResponse(
                 {"error": "Định dạng ngày kết thúc không hợp lệ"}, status=400
             )
@@ -895,40 +990,36 @@ def get_admin_attendance(request):
         subject = get_object_or_404(Subject, id=subject_id)
         session = get_object_or_404(Course, id=session_id)
 
-        # Lọc theo khoảng thời gian nếu có start_date và end_date
         if start_date and end_date:
             attendance_reports = AttendanceReport.objects.filter(
                 attendance__subject=subject,
                 attendance__session=session,
                 attendance__date__range=(start_date, end_date),
             )
-
-        # Lọc theo attendance_date_id nếu không có start_date và end_date
         elif attendance_date_id:
             attendance = get_object_or_404(
                 Attendance, id=attendance_date_id, session=session
             )
             attendance_reports = AttendanceReport.objects.filter(attendance=attendance)
-
-        # Nếu không có đủ tham số, trả về lỗi
         else:
             return JsonResponse({"error": "Thiếu thông tin cần thiết"}, status=400)
 
-        # Chuẩn bị dữ liệu JSON
+        # Chuẩn bị dữ liệu JSON với thông tin thêm về lớp và trường
         json_data = [
             {
                 "student_id": report.student.id,
                 "student_name": str(report.student),
                 "status": report.status,
                 "attendance_date": report.attendance.date.strftime("%d/%m/%Y"),
+                "school_name": report.attendance.session.name,  # Tên trường
+                "class_name": report.attendance.subject.name,  # Tên lớp
             }
             for report in attendance_reports
         ]
-        print("dữ liệu json: ", json_data)
+        print(json_data)
         return JsonResponse(json_data, safe=False)
 
     except Exception as e:
-        logger.error(f"Error: {e}")
         return JsonResponse({"error": str(e)}, status=500)
 
 
@@ -1151,42 +1242,7 @@ def delete_staff(request, staff_id):
 
 from django.core.files.storage import default_storage
 
-# Xóa học sinh
-# def delete_student(request, student_id):
-#     try:
-#         student = get_object_or_404(CustomUser, id=student_id)
 
-#         print("xoa học sinh:", student)
-#         # Xóa ảnh đại diện nếu có
-#         if student.profile_pic:
-#             profile_pic_name = student.profile_pic.name
-#             print("Đường dẫn ảnh đại diện:", profile_pic_name)
-
-#             # Loại bỏ '/media/' khỏi đường dẫn trước khi kiểm tra và xóa
-#             if profile_pic_name.startswith('/media/'):
-#                 profile_pic_name = profile_pic_name[7:]  # Bỏ cả dấu '/'
-
-#             full_profile_pic_path = os.path.join(settings.MEDIA_ROOT, profile_pic_name)
-#             print("Đường dẫn đầy đủ ảnh đại diện:", full_profile_pic_path)
-
-#             # Xóa ảnh đại diện nếu tệp tồn tại
-#             if os.path.exists(full_profile_pic_path):
-#                 default_storage.delete(full_profile_pic_path)
-
-#         # Xóa mã QR nếu có
-#         if student.qr_code:
-#             qr_code_path = os.path.join(settings.MEDIA_ROOT, student.qr_code.name)
-#             if os.path.exists(qr_code_path):
-#                 default_storage.delete(qr_code_path)
-
-#         # Xóa học sinh
-#         student.delete()
-#         messages.success(request, "Xóa học sinh thành công!")
-#     except Exception as e:
-#         messages.error(request, f"Đã xảy ra lỗi khi xóa học sinh: {str(e)}")
-
-
-#     return redirect(reverse("manage_student"))
 @csrf_exempt
 def delete_students(request):
     if request.method == "POST":
@@ -1486,62 +1542,77 @@ def account_register_auto(
     except Exception as e:
         return JsonResponse({"success": False, "errors": {"error": str(e)}})
 
+
 from django.core.exceptions import ValidationError
+
+
 def validate_csv_file(file):
     # Check if the file has a valid CSV extension
     ext = os.path.splitext(file.name)[-1].lower()
-    if ext != '.csv':
+    if ext != ".csv":
         raise ValidationError("Định dạng file không hợp lệ. Chỉ chấp nhận file .csv.")
 
     # Check if the content type is correct (CSV file content type should be 'text/csv')
-    if file.content_type != 'text/csv':
-        raise ValidationError("Loại tệp không hợp lệ. Đảm bảo tệp là CSV với định dạng đúng.")
+    if file.content_type != "text/csv":
+        raise ValidationError(
+            "Loại tệp không hợp lệ. Đảm bảo tệp là CSV với định dạng đúng."
+        )
 
+
+# thêm lịch dạy hàng loạt
 def import_csv_teaching_schedule(request):
     if request.method == "POST" and "csv_file" in request.FILES:
         csv_file = request.FILES["csv_file"]
 
-        # Validate the file format and content type
         try:
             validate_csv_file(csv_file)
         except ValidationError as e:
             messages.error(request, str(e))
-            return redirect('add_session')  # Replace 'add_session' with your actual page
+            return redirect("add_session")
 
-        # Read the CSV file
         try:
             data = csv.reader(csv_file.read().decode("utf-8").splitlines())
         except Exception:
             messages.error(request, "Lỗi khi đọc file CSV.")
-            return redirect('add_session')
+            return redirect("add_session")
 
         try:
-            headers = next(data)  # Skip the header row
+            headers = next(data)
         except StopIteration:
             messages.error(request, "File CSV rỗng hoặc không hợp lệ.")
-            return redirect('add_session')
+            return redirect("add_session")
 
         success_count = 0
         error_count = 0
+        today = timezone.now().date()
+
+        # Tạo workbook và worksheet để lưu lịch dạy vào file Excel
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.title = "Lịch dạy"
+        worksheet.append(
+            ["Email giáo viên", "Trường", "Lớp", "Ngày dạy", "Thời gian"]
+        )  # Thêm tiêu đề cột
 
         with transaction.atomic():
             for row in data:
-                if len(row) != 5:  # Ensure CSV has exactly 5 columns
+                if len(row) != 5:
                     messages.error(request, "Số cột trong file CSV không đúng.")
                     error_count += 1
                     continue
 
                 email_giao_vien, truong, lop, ngay_day, thoi_gian = row
 
-                # Find teacher based on email
                 try:
                     staff = Staff.objects.get(admin__email=email_giao_vien)
                 except Staff.DoesNotExist:
-                    messages.error(request, f"Không tìm thấy giáo viên có email: {email_giao_vien}.")
+                    messages.error(
+                        request,
+                        f"Không tìm thấy giáo viên có email: {email_giao_vien}.",
+                    )
                     error_count += 1
                     continue
 
-                # Find the school (Course)
                 try:
                     school = Course.objects.get(name=truong)
                 except Course.DoesNotExist:
@@ -1549,44 +1620,98 @@ def import_csv_teaching_schedule(request):
                     error_count += 1
                     continue
 
-                # Find the class (Subject)
                 try:
                     subject = Subject.objects.get(name=lop, course=school)
                 except Subject.DoesNotExist:
-                    messages.error(request, f"Không tìm thấy lớp: {lop} thuộc trường {truong}.")
+                    messages.error(
+                        request, f"Không tìm thấy lớp: {lop} thuộc trường {truong}."
+                    )
                     error_count += 1
                     continue
 
-                # Parse the date and time
                 try:
                     schedule_date = datetime.strptime(ngay_day, "%d/%m/%Y").date()
-                    start_time = datetime.strptime(thoi_gian, "%Hh%M").time()  # Format "8h12"
+                    start_time = datetime.strptime(thoi_gian, "%Hh%M").time()
                 except ValueError:
-                    messages.error(request, f"Định dạng ngày hoặc giờ không hợp lệ: {ngay_day} {thoi_gian}.")
+                    messages.error(
+                        request,
+                        f"Định dạng ngày hoặc giờ không hợp lệ: {ngay_day} {thoi_gian}.",
+                    )
                     error_count += 1
                     continue
 
-                # Create the teaching schedule
-                TeachingSchedule.objects.create(
-                    staff=staff,
-                    school_name=school,
-                    class_name=subject,
-                    schedule_date=schedule_date,
-                    start_time=start_time,
-                )
-                success_count += 1
+                if schedule_date >= today:
+                    teaching_schedule = TeachingSchedule.objects.create(
+                        staff=staff,
+                        school_name=school,
+                        class_name=subject,
+                        schedule_date=schedule_date,
+                        start_time=start_time,
+                    )
 
-        # Summary messages
+                    # Thêm dữ liệu vào file Excel
+                    worksheet.append(
+                        [
+                            email_giao_vien,
+                            truong,
+                            lop,
+                            schedule_date.strftime("%d/%m/%Y"),
+                            start_time.strftime("%H:%M"),
+                        ]
+                    )
+
+                    success_count += 1
+                else:
+                    messages.warning(
+                        request,
+                        f"Lịch dạy ngày {ngay_day} đã qua, không thêm vào hệ thống, chỉ thêm lịch dạy có ngày lớn hơn hoặc bằng với ngày hiện tại.",
+                    )
+                    error_count += 1
+
+        # Lưu file Excel vào bộ nhớ
+        excel_file = BytesIO()
+        workbook.save(excel_file)
+        excel_file.seek(0)  # Đặt con trỏ về đầu file
+
+        # Gửi email đính kèm file Excel cho giáo viên
+        if success_count > 0:
+            admin = staff.admin
+            teacher_email = admin.email
+            subject = "Thông báo lịch dạy mới"
+            message = (
+                f"Xin chào Thầy/Cô {admin.last_name} {admin.first_name},\n\n"
+                f"Quý Thầy/Cô vừa được phân công lịch giảng dạy mới.\n"
+                f"File đính kèm chứa chi tiết lịch dạy.\n\n"
+                "Trân trọng cảm ơn."
+            )
+
+            email = EmailMessage(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [teacher_email],
+            )
+
+            # Đính kèm file Excel
+            email.attach(
+                "lich_day.xlsx",
+                excel_file.getvalue(),
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+            email.send()
+
         messages.success(request, f"Đã thêm thành công {success_count} lịch dạy.")
         if error_count > 0:
-            messages.error(request, f"Có {error_count} lịch dạy không được thêm do lỗi.")
+            messages.error(
+                request,
+                f"Có {error_count} lịch dạy không được thêm do lỗi hoặc ngày giảng dạy đã qua.",
+            )
 
-        return redirect('manage_session')  # Redirect to the same or another view
+        return redirect("manage_session")
 
     else:
-        # If it's not a POST request or no file is uploaded, return an error
         messages.error(request, "Không có file CSV nào được tải lên.")
-        return redirect('add_session')  # Redirect when no file is uploaded
+        return redirect("add_session")
 
 
 import logging
