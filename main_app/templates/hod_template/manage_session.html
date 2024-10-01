@@ -18,6 +18,11 @@
                         <h3 class="card-title">{{page_title}}</h3>
                         <!-- Nút thêm lịch dạy và trường tìm kiếm -->
                         <div class="ml-auto d-flex align-items-center">
+
+                            <!-- Nút Xóa với icon thùng rác -->
+                            <button id="deleteSelected" class="btn btn-danger d-flex align-items-center mr-2" style="white-space: nowrap;">
+                                <i class="fas fa-trash-alt mr-2"></i> Xóa
+                            </button>
                             <!-- Nút thêm lịch dạy -->
                             {% url 'add_session' as add_session %}
                             <a href="{{add_session}}" class="btn btn-primary d-flex align-items-center mr-2" style="white-space: nowrap;">
@@ -32,7 +37,7 @@
                             <table id="example2" class="table table-bordered table-hover ">
                                 <thead class="thead-dark">
                                     <tr>
-                                        <th>#</th>
+                                        <th><input type="checkbox" id="selectAll" /></th>
                                         <th>Giáo viên</th>
                                         <th>Tên trường</th>
                                         <th>Tên lớp</th>
@@ -42,9 +47,9 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for session in sessions %}
+                                    {% for session in page_obj %}
                                     <tr>
-                                        <td>{{ forloop.counter }}</td>
+                                        <td><input type="checkbox" class="studentCheckbox" value="{{ session.id }}" /></td>
                                         <td>{{ session.staff }}</td>
                                         <td>{{ session.school_name }}</td>
                                         <td>{{ session.class_name }}</td>
@@ -57,7 +62,25 @@
                                     </tr>
                                     {% endfor %}
                                 </tbody>
-                            </table>
+                                </table>
+                                
+                                <!-- Hiển thị nút phân trang -->
+                                <div class="pagination">
+                                    <span class="step-links">
+                                        {% if page_obj.has_previous %}
+                                            <a href="?page=1">&laquo; Trang đầu</a>
+                                            <a href="?page={{ page_obj.previous_page_number }}">Trang trước</a>
+                                        {% endif %}
+                                
+                                        <span>Trang {{ page_obj.number }} trên {{ page_obj.paginator.num_pages }}</span>
+                                
+                                        {% if page_obj.has_next %}
+                                            <a href="?page={{ page_obj.next_page_number }}">Trang kế</a>
+                                            <a href="?page={{ page_obj.paginator.num_pages }}">Trang cuối &raquo;</a>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                
                         </div>
                         
                     </div>
@@ -92,6 +115,72 @@
             }
         }
     }
+
+    //xóa dữ liệu theo checkbox
+  document.addEventListener("DOMContentLoaded", function() {
+    const selectAllCheckbox = document.getElementById("selectAll");
+    const studentCheckboxes = document.querySelectorAll(".studentCheckbox");
+    const deleteButton = document.getElementById("deleteSelected");
+  
+    // Chọn hoặc bỏ chọn tất cả checkbox
+    selectAllCheckbox.addEventListener("change", function() {
+      studentCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+      });
+    });
+  
+    // Xử lý nút xóa tất cả
+deleteButton.addEventListener("click", function() {
+    const selectedIds = Array.from(studentCheckboxes)
+       .filter(checkbox => checkbox.checked && checkbox.value)  // Lọc các checkbox có giá trị
+       .map(checkbox => checkbox.value);
+ 
+    if (selectedIds.length === 0) {
+       alert("Vui lòng chọn ít nhất một tài khoản để xóa.");
+       return;
+    }
+ 
+    const confirmation = confirm("Bạn có chắc chắn muốn xóa những tài khoản này không?");
+    if (confirmation) {
+       // Gửi yêu cầu xóa tới server
+       fetch('/delete_Schedule/', {
+          method: 'POST',
+          headers: {
+             'Content-Type': 'application/json',
+             'X-CSRFToken': getCookie('csrftoken')  
+          },
+          body: JSON.stringify({ ids: selectedIds })
+       })
+       .then(response => {
+          if (response.ok) {
+             location.reload();
+          } else {
+             alert("Có lỗi xảy ra khi xóa tài khoản.");
+          }
+       });
+    }
+ });
+ 
+  
+    // Hàm để lấy CSRF token
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          // Kiểm tra cookie xem có đúng tên không
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+  });
+
+
 </script>
 
 {% endblock content %}

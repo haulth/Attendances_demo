@@ -32,14 +32,14 @@
                 <i class="fas fa-trash-alt mr-2"></i> Xóa
               </button>
               
-              <!-- Nút Xuất dữ liệu -->
+              <!-- Nút Xuất dữ liệu ra Excel -->
               <button id="export_button" class="btn btn-success d-flex align-items-center mb-2 mb-md-0" style="white-space: nowrap;">
-                <i class="fas fa-file-excel mr-2"></i> Xuất dữ liệu
+                <i class="fas fa-file-excel mr-2"></i> Xuất dữ liệu ra Excel
               </button>
             </div>
             
             <!-- Ô tìm kiếm -->
-            <input id="searchInput" type="text" placeholder="Tìm kiếm..."  class="form-control" style="max-width: 250px; white-space: nowrap;">
+            <input id="searchInput" type="text" placeholder="Tìm kiếm..."  class="form-control" style="max-width: 250px; white-space: nowrap; margin-left: 10px;">
           </div>
 
           <div id="loadingSpinner" class="loader-container">
@@ -57,6 +57,7 @@
                     <th>Giới tính</th>
                     <th>Tên trường</th>
                     <th>Lớp</th>
+                    <th>Ngày tạo</th>
                     <th>Mã QR</th>
                     <th>Hành động</th>
                   </tr>
@@ -79,6 +80,8 @@
                     </td>
                     <td>{{ student.course.name }}</td>
                     <td>{{ student.session.name }}</td>
+                    <td>{{ student.admin.created_at|date:"d/m/Y" }}</td>
+
                     <td>
                       {% if student.admin.qr_code %}
                       <img class="img img-fluid mb-2" height="56" width="56" src="{{ student.admin.qr_code.url }}" alt="Mã QR" />
@@ -177,6 +180,7 @@
           { header: 'Giới tính', key: 'gender', width: 10 },
           { header: 'Trường', key: 'course', width: 20 },
           { header: 'Lớp', key: 'class_room', width: 20 },
+          { header: 'Ngày tạo', key: 'created_at', width: 15 },
           { header: 'Mã QR', key: 'qr_code', width: 16 }
       ];
 
@@ -193,12 +197,13 @@
           if (row.style.display !== 'none') {  // Chỉ xử lý các hàng đang hiển thị
               var cells = row.querySelectorAll('td');
               var rowData = {
-                  index: cells[0].innerText,
+                  //index: cells[0].innerText,
                   full_name: cells[1].innerText,
                   student_id: cells[2].innerText,
                   gender: cells[3].innerText,
                   course: cells[4].innerText,
-                  class_room: cells[5].innerText
+                  class_room: cells[5].innerText,
+                  created_at: cells[6].innerText
               };
 
               worksheet.addRow(rowData);
@@ -209,8 +214,8 @@
               });
 
               // Lưu hình ảnh để xử lý sau
-              if (cells[6].querySelector('img')) {
-                  rowImages.push({ src: cells[6].querySelector('img').src, row: worksheet.lastRow.number, col: 7 });
+              if (cells[7].querySelector('img')) {
+                  rowImages.push({ src: cells[7].querySelector('img').src, row: worksheet.lastRow.number, col: 8 });
               }
           }
       }
