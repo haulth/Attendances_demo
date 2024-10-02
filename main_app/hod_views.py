@@ -522,8 +522,12 @@ def manage_student(request):
             to_attr="teaching_schedules",
         )
     )
+    
+    paginator = Paginator(students, 10)  # Mỗi trang có 10 lịch dạy
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
-    context = {"students": students, "page_title": "Quản lý học sinh"}
+    context = {"students": students,"page_obj": page_obj, "page_title": "Quản lý học sinh"}
     return render(request, "hod_template/manage_student.html", context)
 
 
