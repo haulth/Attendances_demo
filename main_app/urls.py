@@ -27,6 +27,7 @@ urlpatterns = [
      path("doLogin/", views.doLogin, name='user_login'),
      path("logout_user/", views.logout_user, name='user_logout'),
      path("check_email_availability", hod_views.check_email_availability, name="check_email_availability"),
+     
      # Admin / HOD Views
      # Dashboard and Profile Management
      path("admin/home/", hod_views.admin_home, name='admin_home'),
@@ -55,7 +56,7 @@ urlpatterns = [
      path("student/manage/", hod_views.manage_student, name='manage_student'),
      path("student/edit/<int:student_id>", hod_views.edit_student, name='edit_student'),
      path("student/delete/<int:student_id>", hod_views.delete_student, name='delete_student'),
-     path("delete_students/", hod_views.delete_students, name='delete_students'),
+     path("student/deletes/", hod_views.delete_students, name='delete_students'),
 
      # Session Management
      path("schedule/add", hod_views.add_session, name='add_session'),
@@ -63,6 +64,7 @@ urlpatterns = [
      path("delete_schedules/", hod_views.delete_schedules, name='delete_schedules'),
      path("schedule/edit/<int:session_id>", hod_views.edit_session, name='edit_session'),
      path("schedule/delete/<int:session_id>", hod_views.delete_session, name='delete_session'),
+     path('import_csv_teaching_schedule/', hod_views.import_csv_teaching_schedule, name='import_csv_teaching_schedule'),
 
      # Notifications
      path("send_student_notification/", hod_views.send_student_notification, name='send_student_notification'),
@@ -90,7 +92,6 @@ urlpatterns = [
 
      # CSV Import/Export
      path('import_csv/', hod_views.import_csv, name='import_csv'),
-     path('import_csv_teaching_schedule/', hod_views.import_csv_teaching_schedule, name='import_csv_teaching_schedule'),
 
      # Staff-Specific Views
      path("teacher/home/", staff_views.staff_home, name='staff_home'),

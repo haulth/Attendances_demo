@@ -561,7 +561,6 @@ def edit_staff(request, staff_id):
     if request.method == "POST" and form.is_valid():
         try:
             user = staff.admin
-
             # Cập nhật thông tin user từ form
             user.first_name = form.cleaned_data.get("first_name")
             user.last_name = form.cleaned_data.get("last_name")
@@ -592,14 +591,14 @@ def edit_staff(request, staff_id):
             staff.save()
 
             messages.success(request, "Cập nhật thành công")
-            return redirect(reverse("edit_staff", args=[staff_id]))
+            # return redirect(reverse("edit_staff", args=[staff_id]))
+            return redirect(reverse("manage_staff"))
         except Exception as e:
             messages.error(request, "Không thể cập nhật: " + str(e))
     else:
         messages.error(request, "Vui lòng điền đầy đủ thông tin vào biểu mẫu")
 
     return render(request, "hod_template/edit_staff_template.html", context)
-
 
 def edit_student(request, student_id):
     student = get_object_or_404(Student, admin_id=student_id)
@@ -685,7 +684,8 @@ def edit_student(request, student_id):
             student.save()
 
             messages.success(request, "Cập nhật thành công")
-            return redirect(reverse("edit_student", args=[student_id]))
+            # return redirect(reverse("edit_student", args=[student_id]))
+            return redirect(reverse("manage_student"))
         except Exception as e:
             messages.error(request, "Không thể cập nhật: " + str(e))
     else:
@@ -710,6 +710,8 @@ def edit_course(request, course_id):
                 course.name = name
                 course.save()
                 messages.success(request, "Cập nhật thành công")
+                # return redirect(reverse("edit_course", args=[course_id]))
+                return redirect(reverse("manage_course"))
             except:
                 messages.error(request, "Không thể cập nhật")
         else:
@@ -738,7 +740,8 @@ def edit_subject(request, subject_id):
                 subject.course = course
                 subject.save()
                 messages.success(request, "Cập nhật thành công")
-                return redirect(reverse("edit_subject", args=[subject_id]))
+                # return redirect(reverse("edit_subject", args=[subject_id]))
+                return redirect(reverse("manage_subject"))
             except Exception as e:
                 messages.error(request, "Không thể thêm" + str(e))
         else:
@@ -752,8 +755,31 @@ def add_session(request):
         if form.is_valid():
             try:
                 teaching_schedule = form.save()
-
                 # Lấy thông tin email một lần, tránh gọi nhiều lần
+                
+                schedules = TeachingSchedule.objects.filter(staff=teaching_schedule.staff)
+                workbook = Workbook()
+                worksheet = workbook.active
+                worksheet.title = "Lịch dạy"
+                worksheet.append(
+                    ["Tên giáo viên", "Trường", "Lớp", "Ngày dạy", "Thời gian"]
+                ) 
+                for schedule in schedules:
+                    # add to xlsx file 
+                    if schedule.schedule_date < timezone.now().date():
+                        continue
+                    worksheet.append(
+                        [
+                            schedule.staff.admin.last_name + " " + schedule.staff.admin.first_name,
+                            schedule.school_name.name,
+                            schedule.class_name.name,
+                            schedule.schedule_date.strftime("%d/%m/%Y"),
+                            schedule.start_time.strftime("%H:%M"),
+                        ]
+                    )
+                excel_file = BytesIO()
+                workbook.save(excel_file)
+                excel_file.seek(0)
                 admin = teaching_schedule.staff.admin
                 teacher_email = admin.email
                 subject = "Thông báo lịch dạy mới"
@@ -764,19 +790,33 @@ def add_session(request):
                     f"- Thời gian: {teaching_schedule.start_time.strftime('%H:%M')}\n"
                     f"- Lớp học: {teaching_schedule.class_name}\n"
                     f"- Trường: {teaching_schedule.school_name}\n\n"
-                    "Kính mong Quý Thầy/Cô sắp xếp thời gian và chuẩn bị đầy đủ tài liệu để buổi giảng dạy diễn ra thành công.\n\n"
-                    "Trân trọng cảm ơn."
-                )
+                    "Kính mong Quý Thầy/Cô kiểm tra lại toàn bộ lịch dạy trong file đính kèm và có những chuẩn bị cần thiết để buổi giảng dạy diễn ra thành công./.\n\n"
+                    "Trân trọng,\n \n"
+                    "HỆ THỐNG QUẢN LÝ ĐIỂM DANH BDU CÀ MAU"
 
+                )
                 # Gửi email
-                send_mail(
+                email = EmailMessage(
                     subject,
                     message,
                     settings.DEFAULT_FROM_EMAIL,
                     [teacher_email],
-                    fail_silently=False,
                 )
 
+                # Đính kèm file Excel
+                email.attach(
+                    f"Lịch dạy giảng viên {teaching_schedule.staff.admin.last_name} {teaching_schedule.staff.admin.first_name}".upper() + ".xlsx",
+                    excel_file.getvalue(),
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+                email.send()    
+            #     send_mail(
+            #         subject,
+            #         message,
+            #         settings.DEFAULT_FROM_EMAIL,
+            #         [teacher_email],
+            #         fail_silently=False,
+            #     )
                 # Hiển thị thông báo thành công
                 messages.success(
                     request,
@@ -843,7 +883,29 @@ def edit_session(request, session_id):
         if form.is_valid():
             try:
                 updated_teaching_schedule = form.save()
-
+                schedules = TeachingSchedule.objects.filter(staff=updated_teaching_schedule.staff)
+                workbook = Workbook()
+                worksheet = workbook.active
+                worksheet.title = "Lịch dạy"
+                worksheet.append(
+                    ["Tên giáo viên", "Trường", "Lớp", "Ngày dạy", "Thời gian"]
+                ) 
+                for schedule in schedules:
+                    # add to xlsx file 
+                    if schedule.schedule_date < timezone.now().date():
+                        continue
+                    worksheet.append(
+                        [
+                            schedule.staff.admin.last_name + " " + schedule.staff.admin.first_name,
+                            schedule.school_name.name,
+                            schedule.class_name.name,
+                            schedule.schedule_date.strftime("%d/%m/%Y"),
+                            schedule.start_time.strftime("%H:%M"),
+                        ]
+                    )
+                excel_file = BytesIO()
+                workbook.save(excel_file)
+                excel_file.seek(0)
                 # Send email notification to the teacher
                 admin = updated_teaching_schedule.staff.admin
                 teacher_email = admin.email
@@ -855,24 +917,33 @@ def edit_session(request, session_id):
                     f"- Thời gian: {updated_teaching_schedule.start_time.strftime('%H:%M')}\n"
                     f"- Lớp học: {updated_teaching_schedule.class_name}\n"
                     f"- Trường: {updated_teaching_schedule.school_name}\n\n"
-                    "Kính mong Quý Thầy/Cô kiểm tra lại lịch dạy và có những chuẩn bị cần thiết để buổi giảng dạy diễn ra thành công.\n\n"
-                    "Trân trọng cảm ơn."
+                    "Kính mong Quý Thầy/Cô kiểm tra lại toàn bộ lịch dạy trong file đính kèm và có những chuẩn bị cần thiết để buổi giảng dạy diễn ra thành công./.\n\n"
+                    "Trân trọng,\n \n"
+                    "HỆ THỐNG QUẢN LÝ ĐIỂM DANH BDU CÀ MAU"
                 )
 
                 # Gửi email
-                send_mail(
+                email = EmailMessage(
                     subject,
                     message,
                     settings.DEFAULT_FROM_EMAIL,
                     [teacher_email],
-                    fail_silently=False,
                 )
+
+                # Đính kèm file Excel
+                email.attach(
+                    f"Lịch dạy giảng viên {updated_teaching_schedule.staff.admin.last_name} {updated_teaching_schedule.staff.admin.first_name}".upper() + ".xlsx",
+                    excel_file.getvalue(),
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+                email.send() 
 
                 messages.success(
                     request,
                     f"Cập nhật thành công lịch dạy và thông báo đã được gửi đến gamil của giáo viên {admin.last_name} {admin.first_name}.",
                 )
-                return redirect(reverse("edit_session", args=[session_id]))
+                # return redirect(reverse("edit_session", args=[session_id]))
+                return redirect(reverse("manage_session"))
             except Exception as e:
                 messages.error(
                     request, "Hệ thống không thể cập nhật thông tin: " + str(e)
@@ -1641,7 +1712,7 @@ def import_csv_teaching_schedule(request):
         worksheet = workbook.active
         worksheet.title = "Lịch dạy"
         worksheet.append(
-            ["Email giáo viên", "Trường", "Lớp", "Ngày dạy", "Thời gian"]
+            ["Tên giáo viên", "Trường", "Lớp", "Ngày dạy", "Thời gian"]
         )  # Thêm tiêu đề cột
 
         with transaction.atomic():
@@ -1702,14 +1773,13 @@ def import_csv_teaching_schedule(request):
                     # Thêm dữ liệu vào file Excel
                     worksheet.append(
                         [
-                            email_giao_vien,
+                            teaching_schedule.staff.admin.last_name + " " + teaching_schedule.staff.admin.first_name,
                             truong,
                             lop,
                             schedule_date.strftime("%d/%m/%Y"),
                             start_time.strftime("%H:%M"),
                         ]
                     )
-
                     success_count += 1
                 else:
                     messages.warning(
@@ -1727,12 +1797,13 @@ def import_csv_teaching_schedule(request):
         if success_count > 0:
             admin = staff.admin
             teacher_email = admin.email
-            subject = "Thông báo lịch dạy mới"
+            subject = "Thông báo danh sách lịch dạy mới"
             message = (
                 f"Xin chào Thầy/Cô {admin.last_name} {admin.first_name},\n\n"
-                f"Quý Thầy/Cô vừa được phân công lịch giảng dạy mới.\n"
-                f"File đính kèm chứa chi tiết lịch dạy.\n\n"
-                "Trân trọng cảm ơn."
+                f"Quý Thầy/Cô vừa được phân công danh sách lịch giảng dạy mới.\n"
+                f"Quý Thầy/Cô kiểm tra lại toàn bộ lịch dạy trong file đính kèm và có những chuẩn bị cần thiết để buổi giảng dạy diễn ra thành công./.\n\n"
+                "Trân trọng,\n \n"
+                "HỆ THỐNG QUẢN LÝ ĐIỂM DANH BDU CÀ MAU"
             )
 
             email = EmailMessage(
