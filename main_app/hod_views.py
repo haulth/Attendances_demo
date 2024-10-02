@@ -33,6 +33,7 @@ def admin_home(request):
     total_teaching = TeachingSchedule.objects.count()
     subjects = Subject.objects.all()
     courses = Course.objects.all()
+    
 
     # Lấy ngày hôm nay
     vn_tz = pytz.timezone("Asia/Ho_Chi_Minh")
@@ -40,11 +41,54 @@ def admin_home(request):
 
     print(f"ngày được chọn: {selected_date}")
 
+    # Filter logic based on user inputs
+    selected_course = request.GET.get('session', None)  # Selected school (course)
+    selected_subject = request.GET.get('subject', None)  # Selected class (subject)
+    start_date = request.GET.get('start_date', None)
+    end_date = request.GET.get('end_date', None)
+
+    if start_date and end_date:
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+    else:
+        # Default to today
+        vn_tz = pytz.timezone("Asia/Ho_Chi_Minh")
+        today = timezone.now().astimezone(vn_tz).date()
+        start_date = today
+        end_date = today
+
+    filtered_attendance = Attendance.objects.filter(date__range=[start_date, end_date])
+
+    if selected_course:
+        filtered_attendance = filtered_attendance.filter(subject__course_id=selected_course)
+    if selected_subject:
+        filtered_attendance = filtered_attendance.filter(subject_id=selected_subject)
+        
+    
     # Dữ liệu danh sách tên các lớp và số học sinh điểm danh hôm nay
     subject_list = []
     student_present_today_list = []
     student_absent_today_list = []  # Danh sách số học sinh vắng mặt theo lớp
     course_student_counts = {}
+    student_present_list = []
+    student_absent_list = []
+    date_list = []
+    month_list = []
+
+    for attendance in filtered_attendance:
+        date_str = attendance.date.strftime('%Y-%m-%d')
+        day = attendance.date.day
+        month = attendance.date.strftime('%m')  # Lấy tháng dưới dạng số
+
+        if date_str not in date_list:
+            date_list.append(day)  # Lưu ngày
+            month_list.append(month)  # Lưu tháng cho mỗi ngày
+
+        present_count = AttendanceReport.objects.filter(attendance=attendance, status=True).count()
+        absent_count = AttendanceReport.objects.filter(attendance=attendance, status=False).count()
+
+        student_present_list.append(present_count)
+        student_absent_list.append(absent_count)
 
     for course in courses:
         course_name = course.name  # Lấy tên khóa học
@@ -102,6 +146,8 @@ def admin_home(request):
         "total_students": total_students,
         "total_staff": total_staff,
         "total_course": total_course,
+        "subjects": subjects, #tên lớp
+        "courses": courses,# tên trường
         "total_subject": total_subject,
         "subject_list": json.dumps(subject_list),
         "total_teaching": total_teaching,
@@ -110,6 +156,10 @@ def admin_home(request):
         "total_classes": total_classes,
         "classes_with_schedule_today": classes_with_schedule_today,  # Số lớp có lịch học hôm nay
         "course_student_counts": json.dumps(course_student_counts),
+        "student_present_list": json.dumps(student_present_list),
+        "student_absent_list": json.dumps(student_absent_list),
+        "date_list": json.dumps(date_list),
+        "month_list": json.dumps(month_list), 
     }
     print(context)
     return render(request, "hod_template/home_content.html", context)
@@ -1719,7 +1769,6 @@ import logging
 # xuất dữ liệu điểm danh ra file excel
 logger = logging.getLogger(__name__)
 
-
 def export_attendance(request):
     if request.method != "POST":
         return JsonResponse({"error": "Yêu cầu không hợp lệ"}, status=400)
@@ -1769,11 +1818,11 @@ def export_attendance(request):
         ).values_list("student", flat=True)
 
         # Absent students: Chỉ lấy học sinh thuộc lớp được chọn (session)
-        students_absent = Student.objects.filter(session_id=subject).exclude(
+        students_absent = Student.objects.filter(session_id=session).exclude(
             id__in=present_students
         )
 
-        # Data for present students
+        # Data for present students with specific attendance dates
         data = [
             {
                 "Tên học sinh": f"{report.student.admin.last_name} {report.student.admin.first_name}",
@@ -1786,27 +1835,22 @@ def export_attendance(request):
             for report in AttendanceReport.objects.filter(attendance=attendance)
         ]
 
-        # Data for absent students
-        absent_date_range = (
-            f"{format_date(start_date)} - {format_date(end_date)}"
-            if attendance_type == "range"
-            else format_date(attendance_date)
-        )
-
+        # Data for absent students, listing each date separately
         data1 = [
             {
                 "Tên học sinh": f"{student.admin.last_name} {student.admin.first_name}",
                 "Mã học sinh": student.admin.student_id,
                 "Lớp": Subject.objects.get(id=student.session_id).name,
-                "Ngày điểm danh": absent_date_range,
+                "Ngày điểm danh": format_date(attendance.date.strftime("%Y-%m-%d")),
                 "Trạng thái": "Chưa điểm danh",
             }
             for student in students_absent
+            for attendance in attendance_records
         ]
 
-        # Combine data and remove duplicates based on 'Mã học sinh'
+        # Combine data and remove duplicates based on 'Mã học sinh' and 'Ngày điểm danh'
         combined_data = data + data1
-        df = pd.DataFrame(combined_data).drop_duplicates(subset=["Mã học sinh"])
+        df = pd.DataFrame(combined_data).drop_duplicates(subset=["Mã học sinh", "Ngày điểm danh"])
 
         # Creating Excel file
         output = io.BytesIO()
@@ -1818,15 +1862,12 @@ def export_attendance(request):
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
         response["Content-Disposition"] = "attachment; filename=attendance.xlsx"
-        logger.info("Excel file successfully created and returned.")
         return response
 
     except ValueError as e:
-        logger.error(f"Date format error: {e}")
         return JsonResponse({"error": "Định dạng ngày không hợp lệ"}, status=400)
 
     except Exception as e:
-        logger.error(f"Unhandled exception: {e}")
         return JsonResponse({"error": str(e)}, status=500)
 
 

@@ -79,9 +79,10 @@
       <!-- /.row -->
 
       <!-- Main row -->
+    
       <div class="row">
         <div class="col-md-6">
-            <div class="form-group">
+            <div class="form-group" id="singleDatePicker">
                 <label for="datePicker">Chọn ngày:</label>
                 <input type="date" id="datePicker" class="form-control" value="{{ current_date|date:'Y-m-d' }}">
             </div>
@@ -89,6 +90,7 @@
       </div>
 
      <div class="row">
+
         <div class="col-md-6">
             <!-- BAR CHART for Students Present Today by Class -->
             <div class="card card-dark">
@@ -106,7 +108,7 @@
                 </div>
             </div>
         </div> 
-    
+
         <div class="col-md-6">
             <!-- Pie Chart for Classes with Schedule Today -->
             <div class="card card-dark">
@@ -127,6 +129,69 @@
     </div>
     
     <div class="row">
+      <div class="col-lg-12">
+
+        <form id="attendanceFilterForm" method="get">
+          <div class="row d-flex align-items-center">
+              <div class="col-md-3">
+                  <div class="form-group">
+                      <label for="start_date">Chọn khoảng thời gian</label>
+                      <div class="d-flex">
+                          <input type="date" name="start_date" id="start_date" class="form-control me-2">
+                          <input type="date" name="end_date" id="end_date" class="form-control" style="margin-left: 10px;">
+                      </div>
+                  </div>
+              </div>
+
+              <div class="col-md-3">
+                  <div class="form-group">
+                      <label for="session">Chọn trường</label>
+                      <select name="session" class="form-control" id="session">
+                          <option value="">----</option>
+                          {% for course in courses %}
+                          <option value="{{course.id}}">{{course}}</option>
+                          {% endfor %}
+                      </select>
+                  </div>
+              </div>
+
+              <div class="col-md-3">
+                  <div class="form-group">
+                      <label for="subject">Chọn lớp</label>
+                      <select name="subject" class="form-control" id="subject">
+                          <option value="">----</option>
+                          {% for subject in subjects %}
+                          <option value="{{subject.id}}">{{subject.name}}</option>
+                          {% endfor %}
+                      </select>
+                  </div>
+              </div>
+
+              <div class="col-md-2" style="margin-top: 20px; margin-bottom: 10px;">
+                  <button type="submit" class="btn btn-primary">Lọc</button>
+              </div>
+          </div>
+        </form>
+
+          <div class="card card-dark">
+              <div class="card-header">
+                  <h3 class="card-title">Tổng quan điểm danh theo tháng</h3>
+                  <div class="card-tools">
+                      <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
+                      <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
+                  </div>
+              </div>
+              <div class="card-body">
+                  <div>
+                    <canvas id="attendanceChart" width="400" height="150"></canvas>
+                  </div>
+              </div>
+
+          </div>
+      </div>
+  </div>
+
+    <div class="row">
         <div class="col-lg-12">
             <!-- BAR CHART for Student Overview by School -->
             <div class="card card-dark">
@@ -140,8 +205,9 @@
                 <div class="card-body">
                     <div class="chart">
                         <canvas id="schoolOverviewChart" width="800" height="400"></canvas>
-                    </div>
+                    </div> 
                 </div>
+
             </div>
         </div>
     </div>
@@ -228,6 +294,39 @@
     });
 
   
+  $(document).ready(function() {
+        
+    $('#session').change(function() {
+        var session_id = $(this).val(); // Lấy ID trường đã chọn
+
+        
+        if (session_id == "") {
+            $('#subject').html('<option value="">----</option>');
+            return;
+        }
+
+        // Gửi Ajax để lấy danh sách lớp theo trường
+        $.ajax({
+            url: "{% url 'get_subjects_by_session' %}", 
+            type: "GET",
+            data: {
+                session_id: session_id
+            },
+            success: function(response) {
+                
+                var subjects = response.subjects;
+                var html = '<option value="">----</option>';
+                for (var i = 0; i < subjects.length; i++) {
+                    html += '<option value="' + subjects[i].id + '">' + subjects[i].name + '</option>';
+                }
+                $('#subject').html(html); // Cập nhật dropdown của lớp học
+            },
+            error: function() {
+                alert("Lỗi khi lấy danh sách lớp học");
+            }
+        });
+    });
+});
     // Biểu đồ lịch học hôm nay
     var classScheduleChartCanvas = $('#classScheduleChart').get(0).getContext('2d');
     classScheduleChart = new Chart(classScheduleChartCanvas, {
@@ -427,7 +526,6 @@
       });
   });
   
-  
     // Hiển thị ngày hiện tại
     var today = new Date();
     var date = today.getDate() + '/' + (today.getMonth() + 1) + '/' + today.getFullYear();
@@ -468,8 +566,99 @@
     classScheduleChart.data.datasets[0].data = [classesWithSchedule, totalClasses - classesWithSchedule];
     classScheduleChart.update();
   }
+ 
   
+  // Tải dữ liệu cho biểu đồ theo tháng
+  const presentData = JSON.parse('{{ student_present_list|escapejs }}');  
+  const absentData = JSON.parse('{{ student_absent_list|escapejs }}');    
+  const dateList = JSON.parse('{{ date_list|escapejs }}');                
+  const monthList = JSON.parse('{{ month_list|escapejs }}');       
 
+  // Tạo mảng để chứa dữ liệu đã nhóm theo tháng và ngày
+  const groupedLabels = [];   
+  const finalPresentData = []; 
+  const finalAbsentData = []; 
+
+  // Gom nhóm theo ngày và tháng
+  for (let i = 0; i < dateList.length; i++) {
+    const month = monthList[i] ? monthList[i] : 'undefined';  // Kiểm tra nếu monthList[i] không xác định
+    const day = dateList[i];  // Ngày tương ứng từ dateList
+
+    // Gán nhãn "Tháng xx - Ngày yy"
+    groupedLabels.push(`Tháng ${month} - Ngày ${day}`);
+    finalPresentData.push(presentData[i]);  // Thêm dữ liệu có mặt
+    finalAbsentData.push(absentData[i]);    // Thêm dữ liệu vắng mặt
+  }
+
+
+  // Tạo biểu đồ với dữ liệu đã được chia theo ngày và tháng
+  const ctx = document.getElementById('attendanceChart').getContext('2d');
+
+  const data = {
+      labels: groupedLabels,  // Nhãn là các ngày theo tháng
+      datasets: [
+          {
+              label: 'Có mặt',
+              backgroundColor: '#4CAF50',
+              data: finalPresentData  // Dữ liệu có mặt
+          },
+          {
+              label: 'Vắng mặt',
+              backgroundColor: '#FF5722',
+              data: finalAbsentData   // Dữ liệu vắng mặt
+          }
+      ]
+  };
+
+  const config = {
+      type: 'bar',
+      data: data,
+      options: {
+          responsive: true,
+          scales: {
+              x: {
+                  stacked: false,  // Đảm bảo các thanh không bị xếp chồng
+                  title: {
+                      display: true,
+                      text: 'Ngày theo tháng',
+                  },
+                  ticks: {
+                      autoSkip: false, // Hiển thị tất cả các nhãn ngày
+                  },
+                  grid: {
+                      display: false  // Ẩn đường kẻ trên trục x
+                  }
+              },
+              y: {
+                  beginAtZero: true,
+                  title: {
+                      display: true,
+                      text: 'Số lượng học sinh'
+                  },
+                  ticks: {
+                    precision: 0,  // Không hiển thị số thập phân
+                    stepSize: 1,   // Mỗi lần tăng là 1
+                    callback: function(value) {
+                        return Number.isInteger(value) ? value : null;
+                  }}
+              }
+          },
+          plugins: {
+              tooltip: {
+                  callbacks: {
+                      label: function(tooltipItem) {
+                          const label = groupedLabels[tooltipItem.dataIndex];
+                          const present = finalPresentData[tooltipItem.dataIndex];
+                          const absent = finalAbsentData[tooltipItem.dataIndex];
+                          return `${label}: Có mặt ${present}, Vắng mặt ${absent}`;
+                      }
+                  }
+              }
+          }
+      }
+  };
+
+  const attendanceChart = new Chart(ctx, config);
 
 </script>
 
