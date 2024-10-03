@@ -176,7 +176,7 @@
                   {{ start_date|date:'d/m/Y' }} đến {{ end_date|date:'d/m/Y' }}
                 {% else %}
                   [Chưa chọn khoảng thời gian]
-                {% endif %}của lớp{% if subject_name %}
+                {% endif %} của lớp{% if subject_name %}
                   {{ subject_name }}
                 {% else %}
                   [Chưa chọn lớp]
@@ -188,11 +188,16 @@
               </div>
             </div>
             <div class="card-body">
-              <div>
-                <canvas id="attendanceChart" width="400" height="150"></canvas>
-              </div>
+              {% if subject_name %}
+                <div>
+                  <canvas id="attendanceChart" width="400" height="150"></canvas>
+                </div>
+              {% else %}
+                <p class="text-center">Không có dữ liệu để hiển thị.</p>
+              {% endif %}
             </div>
           </div>
+          
         </div>
       </div>
     </div>
@@ -572,17 +577,17 @@
   
   // Tải dữ liệu cho biểu đồ theo tháng
   const presentData = JSON.parse('{{ student_present_list|escapejs }}');  
-  const absentData = JSON.parse('{{ student_absent_list|escapejs }}');    
-  const dateList = JSON.parse('{{ date_list|escapejs }}');                
-  const monthList = JSON.parse('{{ month_list|escapejs }}');       
+const absentData = JSON.parse('{{ student_absent_list|escapejs }}');    
+const dateList = JSON.parse('{{ date_list|escapejs }}');                
+const monthList = JSON.parse('{{ month_list|escapejs }}');       
 
-  // Tạo mảng để chứa dữ liệu đã nhóm theo tháng và ngày
-  const groupedLabels = [];   
-  const finalPresentData = []; 
-  const finalAbsentData = []; 
+// Tạo mảng để chứa dữ liệu đã nhóm theo tháng và ngày
+const groupedLabels = [];   
+const finalPresentData = []; 
+const finalAbsentData = []; 
 
-  // Gom nhóm theo ngày và tháng
-  for (let i = 0; i < dateList.length; i++) {
+// Gom nhóm theo ngày và tháng
+for (let i = 0; i < dateList.length; i++) {
     const month = monthList[i] ? monthList[i] : 'undefined';  // Kiểm tra nếu monthList[i] không xác định
     const day = dateList[i];  // Ngày tương ứng từ dateList
 
@@ -590,77 +595,80 @@
     groupedLabels.push(`Tháng ${month} - Ngày ${day}`);
     finalPresentData.push(presentData[i]);  // Thêm dữ liệu có mặt
     finalAbsentData.push(absentData[i]);    // Thêm dữ liệu vắng mặt
-  }
+}
 
+// Tạo biểu đồ với dữ liệu đã được chia theo ngày và tháng
+const ctx = document.getElementById('attendanceChart').getContext('2d');
 
-  // Tạo biểu đồ với dữ liệu đã được chia theo ngày và tháng
-  const ctx = document.getElementById('attendanceChart').getContext('2d');
+const data = {
+    labels: groupedLabels,  // Nhãn là các ngày theo tháng
+    datasets: [
+        {
+            label: 'Có mặt',
+            backgroundColor: '#4CAF50',
+            data: finalPresentData  // Dữ liệu có mặt
+        },
+        {
+            label: 'Vắng mặt',
+            backgroundColor: '#FF5722',
+            data: finalAbsentData   // Dữ liệu vắng mặt
+        }
+    ]
+};
 
-  const data = {
-      labels: groupedLabels,  // Nhãn là các ngày theo tháng
-      datasets: [
-          {
-              label: 'Có mặt',
-              backgroundColor: '#4CAF50',
-              data: finalPresentData  // Dữ liệu có mặt
-          },
-          {
-              label: 'Vắng mặt',
-              backgroundColor: '#FF5722',
-              data: finalAbsentData   // Dữ liệu vắng mặt
-          }
-      ]
-  };
-
-  const config = {
-      type: 'bar',
-      data: data,
-      options: {
-          responsive: true,
-          scales: {
-              x: {
-                  stacked: false,  // Đảm bảo các thanh không bị xếp chồng
-                  title: {
-                      display: true,
-                      text: 'Ngày theo tháng',
-                  },
-                  ticks: {
-                      autoSkip: false, // Hiển thị tất cả các nhãn ngày
-                  },
-                  grid: {
-                      display: false  // Ẩn đường kẻ trên trục x
-                  }
-              },
-              y: {
-                  beginAtZero: true,
-                  title: {
-                      display: true,
-                      text: 'Số lượng học sinh'
-                  },
-                  ticks: {
+const config = {
+    type: 'bar',
+    data: data,
+    options: {
+        responsive: true,
+        scales: {
+            x: {
+                stacked: false,  // Đảm bảo các thanh không bị xếp chồng
+                title: {
+                    display: true,
+                    text: 'Ngày theo tháng',
+                },
+                ticks: {
+                    autoSkip: true, // Tự động bỏ qua một số nhãn
+                    maxTicksLimit: 10, // Giới hạn số lượng nhãn hiển thị
+                    padding: 10, // Khoảng cách giữa các nhãn
+                },
+                grid: {
+                    display: false  // Ẩn đường kẻ trên trục x
+                }
+            },
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Số lượng học sinh'
+                },
+                ticks: {
                     precision: 0,  // Không hiển thị số thập phân
                     stepSize: 1,   // Mỗi lần tăng là 1
                     callback: function(value) {
                         return Number.isInteger(value) ? value : null;
-                  }}
-              }
-          },
-          plugins: {
-              tooltip: {
-                  callbacks: {
-                      label: function(tooltipItem) {
-                          const label = groupedLabels[tooltipItem.dataIndex];
-                          const present = finalPresentData[tooltipItem.dataIndex];
-                          const absent = finalAbsentData[tooltipItem.dataIndex];
-                          return `${label}: Có mặt ${present}, Vắng mặt ${absent}`;
-                      }
-                  }
-              }
-          }
-      }
-  };
+                    }
+                }
+            }
+        },
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    label: function(tooltipItem) {
+                        const label = groupedLabels[tooltipItem.dataIndex];
+                        const present = finalPresentData[tooltipItem.dataIndex];
+                        const absent = finalAbsentData[tooltipItem.dataIndex];
+                        return `${label}: Có mặt ${present}, Vắng mặt ${absent}`;
+                    }
+                }
+            }
+        }
+    }
+};
 
-  const attendanceChart = new Chart(ctx, config);
+const attendanceChart = new Chart(ctx, config);
+
 
 </script>
 {% endblock %}

@@ -203,8 +203,29 @@ def get_subjects_by_session_staff(request):
 def qr_code_scanner(request):
     if request.method == "POST":
         print('NHẬN DỮ LIỆU')
+        subject_id = request.POST.get('subject_id')
+        session_id = request.POST.get('session_id')
+        date = request.POST.get('date')
+        
+        # Lấy danh sách học sinh theo lớp (subject_id)
+        students = Student.objects.filter(session_id=subject_id)
+        print(f'học sinh: {students}')
 
-        # Lấy dữ liệu mã QR từ request POST
+        # Kiểm tra hoặc tạo Attendance cho buổi học này
+        attendance, created = Attendance.objects.get_or_create(
+                subject_id=subject_id,
+                session_id=session_id,
+                date=date
+            )
+
+        # Thêm tất cả các báo cáo điểm danh với trạng thái False cho học sinh
+        for student in students:
+                AttendanceReport.objects.get_or_create(
+                    student=student,
+                    attendance=attendance,
+                    defaults={'status': False}
+                )
+                
         qr_data = request.POST.get('qr_code_data')
         print(qr_data)
         if not qr_data:
@@ -226,28 +247,23 @@ def qr_code_scanner(request):
             else:
                 print("Tìm thấy Attendance hiện có")
 
-            # Kiểm tra xem sinh viên này đã có AttendanceReport hay chưa
+            # Kiểm tra xem học sinh này đã có AttendanceReport hay chưa
             attendance_report = AttendanceReport.objects.filter(student=student, attendance=attendance).first()
+            
 
-            if attendance_report:
-                if attendance_report.status:
-                    # Nếu sinh viên đã được điểm danh, trả về thông báo
-                    print("Học sinh này đã được điểm danh trước đó.")
-                    return JsonResponse({
-                        "status": "failed",
-                        "message": "Học sinh này đã được điểm danh trước đó!"
-                    })
-                else:
-                    # Nếu trạng thái là False, cập nhật lại điểm danh
-                    attendance_report.status = True
-                    attendance_report.save()
-                    print("Cập nhật điểm danh thành công!")
+            # Kiểm tra trạng thái của học sinh đã điểm danh hay chưa
+            if attendance_report.status:
+                # Nếu sinh viên đã được điểm danh, trả về thông báo
+                print("Học sinh này đã được điểm danh trước đó.")
+                return JsonResponse({
+                    "status": "failed",
+                    "message": "Học sinh này đã được điểm danh trước đó!"
+                })
             else:
-                # Nếu chưa có báo cáo điểm danh, tạo mới và cập nhật
-                attendance_report = AttendanceReport.objects.create(
-                    student=student, attendance=attendance, status=True
-                )
-                print('Điểm danh thành công!')
+                # Nếu trạng thái là False, cập nhật lại điểm danh
+                attendance_report.status = True
+                attendance_report.save()
+                print("Cập nhật điểm danh thành công!")
 
             # Lấy thông tin thời gian hiện tại theo múi giờ Việt Nam
             vn_tz = pytz.timezone('Asia/Ho_Chi_Minh')

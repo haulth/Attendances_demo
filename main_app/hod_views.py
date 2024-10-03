@@ -825,7 +825,7 @@ def add_session(request):
 
                 # Đính kèm file Excel
                 email.attach(
-                    f"Lịch dạy giảng viên {teaching_schedule.staff.admin.last_name} {teaching_schedule.staff.admin.first_name}".upper() + ".xlsx",
+                    f"Lịch dạy giáo viên {teaching_schedule.staff.admin.last_name} {teaching_schedule.staff.admin.first_name}".upper() + ".xlsx",
                     excel_file.getvalue(),
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
@@ -952,7 +952,7 @@ def edit_session(request, session_id):
 
                 # Đính kèm file Excel
                 email.attach(
-                    f"Lịch dạy giảng viên {updated_teaching_schedule.staff.admin.last_name} {updated_teaching_schedule.staff.admin.first_name}".upper() + ".xlsx",
+                    f"Lịch dạy giáo viên {updated_teaching_schedule.staff.admin.last_name} {updated_teaching_schedule.staff.admin.first_name}".upper() + ".xlsx",
                     excel_file.getvalue(),
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
@@ -1835,7 +1835,7 @@ def import_csv_teaching_schedule(request):
 
             # Đính kèm file Excel
             email.attach(
-                "lich_day.xlsx",
+                "Lịch dạy.xlsx",
                 excel_file.getvalue(),
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
