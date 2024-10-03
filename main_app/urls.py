@@ -56,12 +56,12 @@ urlpatterns = [
      path("student/manage/", hod_views.manage_student, name='manage_student'),
      path("student/edit/<int:student_id>", hod_views.edit_student, name='edit_student'),
      path("student/delete/<int:student_id>", hod_views.delete_student, name='delete_student'),
-     path("student/deletes/", hod_views.delete_students, name='delete_students'),
+     path("student/delete_students_all/", hod_views.delete_students_all, name='delete_students_all'),
 
      # Session Management
      path("schedule/add", hod_views.add_session, name='add_session'),
      path("schedule/manage/", hod_views.manage_session, name='manage_session'),
-     path("delete_schedules/", hod_views.delete_schedules, name='delete_schedules'),
+     path("schedule/deletes/", hod_views.delete_schedules, name='delete_schedules'),
      path("schedule/edit/<int:session_id>", hod_views.edit_session, name='edit_session'),
      path("schedule/delete/<int:session_id>", hod_views.delete_session, name='delete_session'),
      path('import_csv_teaching_schedule/', hod_views.import_csv_teaching_schedule, name='import_csv_teaching_schedule'),

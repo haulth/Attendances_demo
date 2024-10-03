@@ -87,22 +87,66 @@
                 </tbody>
               </table>
 
-              <!-- Hiển thị nút phân trang -->
-              <div class="pagination">
-                <span class="step-links">
+               <!-- Hiển thị nút phân trang -->
+               <nav aria-label="Page navigation d-flex" class="mt-4">
+                <ul class="pagination justify-content-left">
                     {% if page_obj.has_previous %}
-                        <a href="?page=1">&laquo; Trang đầu</a>
-                        <a href="?page={{ page_obj.previous_page_number }}">Trang trước</a>
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1" aria-label="First">
+                                <span aria-hidden="true">&laquo; Trang đầu</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                <i class="fas fa-arrow-left"></i> Trang trước
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" aria-label="First" tabindex="-1">
+                                <span aria-hidden="true">&laquo; Trang đầu</span>
+                            </a>
+                        </li>
+                        <li class="page-item disabled">
+                            <a class="page-link" tabindex="-1">
+                                <i class="fas fa-arrow-left"></i> Trang trước
+                            </a>
+                        </li>
                     {% endif %}
-            
-                    <span>Trang {{ page_obj.number }} trên {{ page_obj.paginator.num_pages }}</span>
-            
+
+                    <!-- Hiển thị trang hiện tại -->
+                    <li class="page-item active">
+                        <a class="page-link bg-primary text-white" style="font-weight: bold;">
+                            Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                        </a>
+                    </li>
+
                     {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}">Trang kế</a>
-                        <a href="?page={{ page_obj.paginator.num_pages }}">Trang cuối &raquo;</a>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                Trang kế <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                                <span aria-hidden="true">Trang cuối &raquo;</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" tabindex="-1">
+                                Trang kế <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item disabled">
+                            <a class="page-link" aria-label="Last" tabindex="-1">
+                                <span aria-hidden="true">Trang cuối &raquo;</span>
+                            </a>
+                        </li>
                     {% endif %}
-                </span>
-            </div>
+                </ul>
+              </nav>
+              
             </div>
             </div>
           </div>
