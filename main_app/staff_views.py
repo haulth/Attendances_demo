@@ -172,7 +172,7 @@ def staff_take_attendance(request):
 
     # Nếu giáo viên không có lịch dạy hôm nay, chặn truy cập và thông báo
     if not has_schedule_today:
-        messages.error(request, "Bạn không có lịch dạy hôm nay. Truy cập điểm danh thủ công không được phép.")
+        messages.error(request, "Bạn không có lịch dạy hôm nay!")
         return redirect("staff_home")
     teachingSchedule = TeachingSchedule.objects.filter(staff_id=staff)
 
@@ -593,7 +593,7 @@ def staff_view_notification(request):
 
     # Nếu giáo viên không có lịch dạy hôm nay, chặn truy cập và thông báo
     if not has_schedule_today:
-        messages.error(request, "Bạn không có lịch dạy hôm nay. Truy cập điểm danh bằng mã QR không được phép.")
+        messages.error(request, "Bạn không có lịch dạy hôm nay!")
         return redirect("staff_home")
 
     # Lấy danh sách lịch dạy của giáo viên
