@@ -285,7 +285,7 @@
       const confirmation = confirm("Bạn có chắc chắn muốn xóa những tài khoản này không?");
       if (confirmation) {
         // Gửi yêu cầu xóa tới server
-        fetch('/delete_students/', {
+        fetch('/student/deletes/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
