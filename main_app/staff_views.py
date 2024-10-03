@@ -164,6 +164,16 @@ def staff_home(request):
 
 def staff_take_attendance(request):
     staff = get_object_or_404(Staff, admin=request.user)
+    
+     # Lấy thời gian hiện tại
+    current_date = timezone.now().date()
+    # Kiểm tra xem giáo viên có lịch dạy vào ngày hiện tại hay không
+    has_schedule_today = TeachingSchedule.objects.filter(staff=staff, schedule_date=current_date).exists()
+
+    # Nếu giáo viên không có lịch dạy hôm nay, chặn truy cập và thông báo
+    if not has_schedule_today:
+        messages.error(request, "Bạn không có lịch dạy hôm nay. Truy cập điểm danh thủ công không được phép.")
+        return redirect("staff_home")
     teachingSchedule = TeachingSchedule.objects.filter(staff_id=staff)
 
     # Lấy danh sách các lớp (subject) và các trường (session)
@@ -572,18 +582,33 @@ def staff_fcmtoken(request):
 
 
 def staff_view_notification(request):
+    # Lấy thông tin giáo viên hiện tại
     staff = get_object_or_404(Staff, admin=request.user)
+
+    # Lấy thời gian hiện tại
+    current_date = timezone.now().date()
+
+    # Kiểm tra xem giáo viên có lịch dạy vào ngày hiện tại hay không
+    has_schedule_today = TeachingSchedule.objects.filter(staff=staff, schedule_date=current_date).exists()
+
+    # Nếu giáo viên không có lịch dạy hôm nay, chặn truy cập và thông báo
+    if not has_schedule_today:
+        messages.error(request, "Bạn không có lịch dạy hôm nay. Truy cập điểm danh bằng mã QR không được phép.")
+        return redirect("staff_home")
+
+    # Lấy danh sách lịch dạy của giáo viên
     teachingSchedule = TeachingSchedule.objects.filter(staff_id=staff)
-    class_names = [schedule.list_class_name() for schedule in teachingSchedule]
-    school_names = [schedule.list_school_name() for schedule in teachingSchedule]
-    # kiểm tra school nếu số lần xuất hiện là 2  thì bỏ khỏi danh sách
-    for school_name in school_names:
-        if school_names.count(school_name) > 1:
-            school_names.remove(school_name)
+
+    # Sử dụng set để loại bỏ các lớp học và trường học bị trùng lặp
+    class_names = {schedule.list_class_name() for schedule in teachingSchedule}
+    school_names = {schedule.list_school_name() for schedule in teachingSchedule}
+
     sessions = Course.objects.all()
+
+    # Truyền thông tin vào context để hiển thị trên trang
     context = {
-        "subjects": class_names,
-        "sessions": school_names,
+        "subjects": list(class_names),  # Chuyển set về list để có thể sử dụng trong template
+        "sessions": list(school_names),  # Chuyển set về list
         "page_title": "Điểm danh với mã QR",
     }
 
