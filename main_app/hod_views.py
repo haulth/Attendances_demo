@@ -46,6 +46,18 @@ def admin_home(request):
     selected_subject = request.GET.get('subject', None)  # Selected class (subject)
     start_date = request.GET.get('start_date', None)
     end_date = request.GET.get('end_date', None)
+    session = request.GET.get('session', '')
+    subject_name = None
+
+    
+    if selected_subject:
+        try:
+            subject = Subject.objects.get(id=selected_subject)  # Lấy đối tượng Subject
+            subject_name = subject.name
+            print(f'tên lớp đc chọn: {subject}')
+        except Subject.DoesNotExist:
+            subject_name = None
+
 
     if start_date and end_date:
         start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
@@ -159,7 +171,11 @@ def admin_home(request):
         "student_present_list": json.dumps(student_present_list),
         "student_absent_list": json.dumps(student_absent_list),
         "date_list": json.dumps(date_list),
-        "month_list": json.dumps(month_list), 
+        "month_list": json.dumps(month_list),  
+        'start_date': start_date,
+        'end_date': end_date,
+        'session': session,
+        'subject_name': subject_name,
     }
     print(context)
     return render(request, "hod_template/home_content.html", context)
@@ -1369,7 +1385,7 @@ from django.core.files.storage import default_storage
 
 
 @csrf_exempt
-def delete_students(request):
+def delete_students_all(request):
     if request.method == "POST":
         data = json.loads(request.body)
         ids = data.get("ids", [])

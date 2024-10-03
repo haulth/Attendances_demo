@@ -64,22 +64,65 @@
                                 </tbody>
                                 </table>
                                 
-                                <!-- Hiển thị nút phân trang -->
-                                <div class="pagination">
-                                    <span class="step-links">
-                                        {% if page_obj.has_previous %}
-                                            <a href="?page=1">&laquo; Trang đầu</a>
-                                            <a href="?page={{ page_obj.previous_page_number }}">Trang trước</a>
-                                        {% endif %}
-                                
-                                        <span>Trang {{ page_obj.number }} trên {{ page_obj.paginator.num_pages }}</span>
-                                
-                                        {% if page_obj.has_next %}
-                                            <a href="?page={{ page_obj.next_page_number }}">Trang kế</a>
-                                            <a href="?page={{ page_obj.paginator.num_pages }}">Trang cuối &raquo;</a>
-                                        {% endif %}
-                                    </span>
-                                </div>
+                                 <!-- Hiển thị nút phân trang -->
+                                    <nav aria-label="Page navigation d-flex" class="mt-4">
+                                        <ul class="pagination justify-content-left">
+                                            {% if page_obj.has_previous %}
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?page=1" aria-label="First">
+                                                        <span aria-hidden="true">&laquo; Trang đầu</span>
+                                                    </a>
+                                                </li>
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                                        <i class="fas fa-arrow-left"></i> Trang trước
+                                                    </a>
+                                                </li>
+                                            {% else %}
+                                                <li class="page-item disabled">
+                                                    <a class="page-link" aria-label="First" tabindex="-1">
+                                                        <span aria-hidden="true">&laquo; Trang đầu</span>
+                                                    </a>
+                                                </li>
+                                                <li class="page-item disabled">
+                                                    <a class="page-link" tabindex="-1">
+                                                        <i class="fas fa-arrow-left"></i> Trang trước
+                                                    </a>
+                                                </li>
+                                            {% endif %}
+
+                                            <!-- Hiển thị trang hiện tại -->
+                                            <li class="page-item active">
+                                                <a class="page-link bg-primary text-white" style="font-weight: bold;">
+                                                    Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                                                </a>
+                                            </li>
+
+                                            {% if page_obj.has_next %}
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                                        Trang kế <i class="fas fa-arrow-right"></i>
+                                                    </a>
+                                                </li>
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                                                        <span aria-hidden="true">Trang cuối &raquo;</span>
+                                                    </a>
+                                                </li>
+                                            {% else %}
+                                                <li class="page-item disabled">
+                                                    <a class="page-link" tabindex="-1">
+                                                        Trang kế <i class="fas fa-arrow-right"></i>
+                                                    </a>
+                                                </li>
+                                                <li class="page-item disabled">
+                                                    <a class="page-link" aria-label="Last" tabindex="-1">
+                                                        <span aria-hidden="true">Trang cuối &raquo;</span>
+                                                    </a>
+                                                </li>
+                                            {% endif %}
+                                        </ul>
+                                    </nav>
                                 
                         </div>
                         
@@ -117,51 +160,51 @@
     }
 
     //xóa dữ liệu theo checkbox
-  document.addEventListener("DOMContentLoaded", function() {
-    const selectAllCheckbox = document.getElementById("selectAll");
-    const studentCheckboxes = document.querySelectorAll(".studentCheckbox");
-    const deleteButton = document.getElementById("deleteSelected");
-  
-    // Chọn hoặc bỏ chọn tất cả checkbox
-    selectAllCheckbox.addEventListener("change", function() {
-      studentCheckboxes.forEach(checkbox => {
-        checkbox.checked = selectAllCheckbox.checked;
-      });
-    });
-  
+    document.addEventListener("DOMContentLoaded", function() {
+        const selectAllCheckbox = document.getElementById("selectAll");
+        const studentCheckboxes = document.querySelectorAll(".studentCheckbox");
+        const deleteButton = document.getElementById("deleteSelected");
+    
+        // Chọn hoặc bỏ chọn tất cả checkbox
+        selectAllCheckbox.addEventListener("change", function() {
+        studentCheckboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+        });
+    
     // Xử lý nút xóa tất cả
-deleteButton.addEventListener("click", function() {
-    const selectedIds = Array.from(studentCheckboxes)
-       .filter(checkbox => checkbox.checked && checkbox.value)  // Lọc các checkbox có giá trị
-       .map(checkbox => checkbox.value);
- 
-    if (selectedIds.length === 0) {
-       alert("Vui lòng chọn ít nhất một tài khoản để xóa.");
-       return;
-    }
- 
-    const confirmation = confirm("Bạn có chắc chắn muốn xóa những tài khoản này không?");
-    if (confirmation) {
-       // Gửi yêu cầu xóa tới server
-       fetch('/schedule/deletes/', {
-          method: 'POST',
-          headers: {
-             'Content-Type': 'application/json',
-             'X-CSRFToken': getCookie('csrftoken')  
-          },
-          body: JSON.stringify({ ids: selectedIds })
-       })
-       .then(response => {
-          if (response.ok) {
-             location.reload();
-          } else {
-             alert("Có lỗi xảy ra khi xóa tài khoản.");
-          }
-       });
-    }
- });
- 
-  
+
+    deleteButton.addEventListener("click", function() {
+        const selectedIds = Array.from(studentCheckboxes)
+        .filter(checkbox => checkbox.checked && checkbox.value)  // Lọc các checkbox có giá trị
+        .map(checkbox => checkbox.value);
+    
+        if (selectedIds.length === 0) {
+        alert("Vui lòng chọn ít nhất một tài khoản để xóa.");
+        return;
+        }
+    
+        const confirmation = confirm("Bạn có chắc chắn muốn xóa những tài khoản này không?");
+        if (confirmation) {
+        // Gửi yêu cầu xóa tới server
+        fetch('/schedule/deletes/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')  
+            },
+            body: JSON.stringify({ ids: selectedIds })
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert("Có lỗi xảy ra khi xóa tài khoản.");
+            }
+        });
+        }
+    });
+
     // Hàm để lấy CSRF token
     function getCookie(name) {
       let cookieValue = null;

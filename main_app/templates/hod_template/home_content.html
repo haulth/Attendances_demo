@@ -49,14 +49,13 @@
         </div>
         <!-- ./col -->
         <div class="col-lg-3 col-6">
-          <div class="small-box bg-light"> 
+          <div class="small-box bg-light">
             <div class="inner">
-              <h3>{{ total_subject }}</h3> 
+              <h3>{{ total_subject }}</h3>
               <p>Tổng số lớp học</p>
             </div>
             <div class="icon">
               <i class="nav-icon fas fa-door-open"></i>
-
             </div>
             <a href="{% url 'manage_subject' %}" class="small-box-footer">Thông tin <i class="fas fa-arrow-circle-right"></i></a>
           </div>
@@ -79,146 +78,149 @@
       <!-- /.row -->
 
       <!-- Main row -->
-    
+
       <div class="row">
         <div class="col-md-6">
-            <div class="form-group" id="singleDatePicker">
-                <label for="datePicker">Chọn ngày:</label>
-                <input type="date" id="datePicker" class="form-control" value="{{ current_date|date:'Y-m-d' }}">
-            </div>
+          <div class="form-group" id="singleDatePicker">
+            <label for="datePicker">Chọn ngày:</label>
+            <input type="date" id="datePicker" class="form-control" value="{{ current_date|date:'Y-m-d' }}" />
+          </div>
         </div>
       </div>
 
-     <div class="row">
-
+      <div class="row">
         <div class="col-md-6">
-            <!-- BAR CHART for Students Present Today by Class -->
-            <div class="card card-dark">
-                <div class="card-header">
-                    <h3 class="card-title" id="current-date">Học sinh có và vắng mặt ngày: </h3>
-                    <div class="card-tools">
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
-                        <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="chart">
-                        <canvas id="studentsPresentChart" style="width: 100%; height: 400;"></canvas>
-                    </div>
-                </div>
+          <!-- BAR CHART for Students Present Today by Class -->
+          <div class="card card-dark">
+            <div class="card-header">
+              <h3 class="card-title" id="current-date">Học sinh có và vắng mặt ngày:</h3>
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
+                <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
+              </div>
             </div>
-        </div> 
-
-        <div class="col-md-6">
-            <!-- Pie Chart for Classes with Schedule Today -->
-            <div class="card card-dark">
-                <div class="card-header">
-                    <h3 class="card-title" id="current-date1">Lịch học ngày: </h3>
-                    <div class="card-tools">
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
-                        <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="chart">
-                        <canvas id="classScheduleChart" width="800" height="400"></canvas>
-                    </div>
-                </div>
+            <div class="card-body">
+              <div class="chart">
+                <canvas id="studentsPresentChart" style="width: 100%; height: 400;"></canvas>
+              </div>
             </div>
+          </div>
         </div>
-    </div>
-    
-    <div class="row">
-      <div class="col-lg-12">
 
-        <form id="attendanceFilterForm" method="get">
-          <div class="row d-flex align-items-center">
+        <div class="col-md-6">
+          <!-- Pie Chart for Classes with Schedule Today -->
+          <div class="card card-dark">
+            <div class="card-header">
+              <h3 class="card-title" id="current-date1">Lịch học ngày:</h3>
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
+                <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="chart">
+                <canvas id="classScheduleChart" width="800" height="400"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-lg-12">
+          <form id="attendanceFilterForm" method="get">
+            <div class="row d-flex align-items-center">
               <div class="col-md-3">
-                  <div class="form-group">
-                      <label for="start_date">Chọn khoảng thời gian</label>
-                      <div class="d-flex">
-                          <input type="date" name="start_date" id="start_date" class="form-control me-2">
-                          <input type="date" name="end_date" id="end_date" class="form-control" style="margin-left: 10px;">
-                      </div>
+                <div class="form-group">
+                  <label for="start_date">Chọn khoảng thời gian</label>
+                  <div class="d-flex">
+                    <input type="date" name="start_date" id="start_date" class="form-control me-2" />
+                    <input type="date" name="end_date" id="end_date" class="form-control" style="margin-left: 10px;" />
                   </div>
+                </div>
               </div>
 
               <div class="col-md-3">
-                  <div class="form-group">
-                      <label for="session">Chọn trường</label>
-                      <select name="session" class="form-control" id="session">
-                          <option value="">----</option>
-                          {% for course in courses %}
-                          <option value="{{course.id}}">{{course}}</option>
-                          {% endfor %}
-                      </select>
-                  </div>
+                <div class="form-group">
+                  <label for="session">Chọn trường</label>
+                  <select name="session" class="form-control" id="session">
+                    <option value="">----</option>
+                    {% for course in courses %}
+                      <option value="{{ course.id }}">{{ course }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
               </div>
 
               <div class="col-md-3">
-                  <div class="form-group">
-                      <label for="subject">Chọn lớp</label>
-                      <select name="subject" class="form-control" id="subject">
-                          <option value="">----</option>
-                          {% for subject in subjects %}
-                          <option value="{{subject.id}}">{{subject.name}}</option>
-                          {% endfor %}
-                      </select>
-                  </div>
+                <div class="form-group">
+                  <label for="subject">Chọn lớp</label>
+                  <select name="subject" class="form-control" id="subject">
+                    <option value="">----</option>
+                    {% for subject in subjects %}
+                      <option value="{{ subject.id }}">{{ subject.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
               </div>
 
               <div class="col-md-2" style="margin-top: 20px; margin-bottom: 10px;">
-                  <button type="submit" class="btn btn-primary">Lọc</button>
+                <button type="submit" class="btn btn-primary">Lọc</button>
               </div>
-          </div>
-        </form>
-
+            </div>
+          </form>
           <div class="card card-dark">
-              <div class="card-header">
-                  <h3 class="card-title">Tổng quan điểm danh theo tháng</h3>
-                  <div class="card-tools">
-                      <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
-                      <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
-                  </div>
+            <div class="card-header">
+              <h3 class="card-title">
+                Tổng quan điểm danh từ{% if start_date and end_date %}
+                  {{ start_date|date:'d/m/Y' }} đến {{ end_date|date:'d/m/Y' }}
+                {% else %}
+                  [Chưa chọn khoảng thời gian]
+                {% endif %}của lớp{% if subject_name %}
+                  {{ subject_name }}
+                {% else %}
+                  [Chưa chọn lớp]
+                {% endif %}
+              </h3>
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
+                <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
               </div>
-              <div class="card-body">
-                  <div>
-                    <canvas id="attendanceChart" width="400" height="150"></canvas>
-                  </div>
+            </div>
+            <div class="card-body">
+              <div>
+                <canvas id="attendanceChart" width="400" height="150"></canvas>
               </div>
-
+            </div>
           </div>
+        </div>
       </div>
-  </div>
+    </div>
 
     <div class="row">
-        <div class="col-lg-12">
-            <!-- BAR CHART for Student Overview by School -->
-            <div class="card card-dark">
-                <div class="card-header">
-                    <h3 class="card-title">Tổng quan học sinh theo trường</h3>
-                    <div class="card-tools">
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
-                        <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="chart">
-                        <canvas id="schoolOverviewChart" width="800" height="400"></canvas>
-                    </div> 
-                </div>
-
+      <div class="col-lg-12">
+        <!-- BAR CHART for Student Overview by School -->
+        <div class="card card-dark">
+          <div class="card-header">
+            <h3 class="card-title">Tổng quan học sinh theo trường</h3>
+            <div class="card-tools">
+              <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
+              <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
             </div>
+          </div>
+          <div class="card-body">
+            <div class="chart">
+              <canvas id="schoolOverviewChart" width="800" height="400"></canvas>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
     <!-- /.container-fluid -->
-</section>
-
+  </section>
 {% endblock %}
 {% block custom_js %}
-
-
-<script>
+  <script>
   var studentsPresentChart;
   var classScheduleChart;
 
@@ -661,5 +663,4 @@
   const attendanceChart = new Chart(ctx, config);
 
 </script>
-
-{% endblock  %}
+{% endblock %}
